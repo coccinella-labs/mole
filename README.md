@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/Coccinella-Labs/molplatform/main/.github/assets/thumbnail.png" alt="molplatform" width="100%">
 </p>
 
-# mol-platform
+# molplatform
 
 A containerized microservice for molecular generation and analysis. Generates molecular variants through systematic mutations using RDKit. Features a REST API, web interface, and CLI tool with secure API key authentication.
 
@@ -12,6 +12,22 @@ A containerized microservice for molecular generation and analysis. Generates mo
 
 * [Docker](https://docs.docker.com/get-docker/)
 * [Docker Compose](https://docs.docker.com/compose/)
+
+## Components
+
+`docker-compose up` starts four services, not one:
+
+| Service | Role | Port |
+|---|---|---|
+| `backend` | FastAPI service, serves `/docs` and `/generate_molecule` | 8000 |
+| `frontend` | web interface | 3000 |
+| `redis` | broker for the Celery worker | 6379 |
+| `celery_worker` | Celery app, present for planned async work | none |
+
+Generation is handled inline in the request: `/generate_molecule` calls
+`MoleculeGenerator` directly and does not enqueue to Celery. `config.py` labels
+the Celery settings as being for future async processing, so Redis and the
+worker are wired up but not yet on the request path.
 
 ---
 
