@@ -66,8 +66,7 @@ class MoleculeGenerator:
             preview = base_smiles[:60]
             suffix = "..." if len(base_smiles) > 60 else ""
             raise ValueError(
-                f"Invalid SMILES: {preview!r}{suffix} "
-                f"({len(base_smiles)} characters)"
+                f"Invalid SMILES: {preview!r}{suffix} ({len(base_smiles)} characters)"
             )
 
         mol = Chem.MolFromSmiles(base_smiles)
