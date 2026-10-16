@@ -9,21 +9,26 @@ Continuous Integration and Deployment pipeline for mol-platform.
 Runs on pushes and PRs to main:
 
 1. **Setup Environment**
-   - Python 3.12
+   - Python 3.12, 3.13 and 3.14, as a matrix, so every backend step runs three times
+   - Postgres 15 and Redis as service containers
    - Node.js 18
 
 2. **Backend Testing**
-   - Install dependencies
-   - Run unit tests
-   - Run e2e tests
+   - Install dependencies from `backend/requirements.txt`
+   - Run unit tests, `tests/test_molecule_generation.py`
+   - Run e2e tests, `tests/e2e/`
 
 3. **Frontend Testing**
-   - Install dependencies
-   - Run unit tests
-   - Run linting
+   - Install dependencies with `npm ci`
+   - Run `react-scripts test --watchAll=false --passWithNoTests`
+
+   There is no separate lint step in any workflow. Create React App runs ESLint
+   as part of `react-scripts build`, which happens in `docker.yml`, not here.
+   Because `docker build` does not inherit the runner environment, `CI` is not
+   set inside that build, so ESLint warnings do not fail the build.
 
 4. **Build Check**
-   - Build Docker images
+   - `docker-compose build`
 
 ### Docker Workflow (.github/workflows/docker.yml)
 
@@ -32,6 +37,49 @@ Builds and pushes Docker images to GitHub Container Registry:
 - Triggered on pushes and PRs
 - Builds backend, frontend, and celery images
 - Pushes to `ghcr.io`
+
+### Docs Workflow (.github/workflows/docs.yml)
+
+Builds the documentation site and publishes it to GitHub Pages.
+
+- Triggered on pushes and pull requests
+- Concurrency group `pages`, with `cancel-in-progress: false`, so a queued
+  publish is never cancelled halfway
+
+### Release Workflow (.github/workflows/release.yml)
+
+Triggered by a tag matching `v*`. Builds a single-file CLI binary and attaches
+it to a GitHub release.
+
+- `pip install pyinstaller`, then
+  `pyinstaller --onefile src/cli.py --name mol-platform-${{ matrix.target }}`
+- Runs on a per-OS matrix. Assets are named per target, so they do not collide:
+
+  | Runner | Asset |
+  |---|---|
+  | `ubuntu-latest` | `mol-platform-linux` |
+  | `macos-latest` | `mol-platform-macos` |
+  | `windows-latest` | `mol-platform-windows.exe` |
+
+- Attached via `softprops/action-gh-release`, with generated release notes
+
+This is the fastest way to get the CLI, since it skips building a wheel and
+needs no Python environment:
+
+```
+curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mol-platform-macos
+chmod +x mol-platform-macos
+./mol-platform-macos --api-key your-key --health
+```
+
+Substitute `mol-platform-linux` or `mol-platform-windows.exe` for the other
+platforms.
+
+**Note on `v1.0.0`.** That release predates the per-target rename, so it only
+contains `mol-platform` and `mol-platform.exe`. Because both the Linux and
+macOS jobs uploaded a file called `mol-platform`, they overwrote each other and
+the surviving asset is the Linux build. Verified: downloading it on macOS gives
+`exec format error`. There is currently no macOS binary for `v1.0.0`.
 
 ### E2E Workflow (.github/workflows/e2e.yml)
 
