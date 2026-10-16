@@ -4,7 +4,7 @@
 
 # molplatform
 
-A containerized microservice for molecular generation and analysis. Generates molecular variants through systematic mutations using RDKit. Features a REST API, web interface, and CLI tool with secure API key authentication.
+A containerized microservice for molecular generation and analysis. Generates molecular variants through random mutations using RDKit. Features a REST API, web interface, and CLI tool with secure API key authentication.
 
 ---
 
@@ -77,7 +77,7 @@ mol-platform --api-key your-key --generate "CC(=O)OC1=CC=CC=C1C(=O)O"
 
 **Endpoint:** `POST /generate_molecule`
 
-Facilitates the creation of molecular variants through systematic mutations.
+Facilitates the creation of molecular variants through random mutations.
 
 **Request Structure**
 

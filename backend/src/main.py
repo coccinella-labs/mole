@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="mol-platform",
-    description="Containerized microservice for molecular simulation and mutation analysis",
+    description="Containerized microservice for molecular generation and mutation analysis",
     version="1.0.0",
 )
 
