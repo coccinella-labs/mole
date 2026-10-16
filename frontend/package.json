@@ -5,11 +5,11 @@
   "dependencies": {
     "@heroicons/react": "^2.1.1",
     "@tailwindcss/forms": "^0.5.7",
-    "axios": "^1.6.8",
+    "axios": "^1.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.3",
-    "react-toastify": "^10.0.4",
+    "react-router-dom": "^7.18.3",
+    "react-toastify": "^11.1.0",
     "react-tooltip": "^5.26.3"
   },
   "scripts": {
@@ -20,7 +20,6 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"
   },
-
   "browserslist": {
     "production": [
       ">0.2%",
@@ -35,8 +34,8 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.3",
-    "postcss": "^8.4.35",
+    "postcss": "^8.5.26",
     "autoprefixer": "^10.4.18",
-    "cypress": "^13.6.0"
+    "cypress": "^15.16.0"
   }
 }
