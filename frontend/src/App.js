@@ -80,12 +80,12 @@ function App() {
                 <h2 className="text-3xl font-extrabold text-center text-gray-900">
                   mol-platform
                 </h2>
-                
+
                 <div className="flex flex-col">
                   <label className="leading-loose">Base Molecule SMILES</label>
-                  <input 
-                    type="text" 
-                    className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600" 
+                  <input
+                    type="text"
+                    className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     placeholder="Enter SMILES (e.g., CC(=O)OC1=CC=CC=C1C(=O)O)"
                     value={baseMolecule}
                     onChange={(e) => setBaseMolecule(e.target.value)}
@@ -94,9 +94,9 @@ function App() {
 
                 <div className="flex flex-col">
                   <label className="leading-loose">Number of Mutations</label>
-                  <input 
-                    type="number" 
-                    className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600" 
+                  <input
+                    type="number"
+                    className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     value={numMutations}
                     onChange={(e) => setNumMutations(parseInt(e.target.value))}
                     min="1"
@@ -105,7 +105,7 @@ function App() {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <button 
+                  <button
                     onClick={handleGenerate}
                     disabled={isLoading}
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -119,9 +119,9 @@ function App() {
                 <div className="pt-4 flex flex-col">
                   <h3 className="text-xl font-semibold mb-2">Generated Molecule</h3>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <img 
-                      src={`data:image/png;base64,${generatedMolecule.molecular_image}`} 
-                      alt="Generated Molecule" 
+                    <img
+                      src={`data:image/png;base64,${generatedMolecule.molecular_image}`}
+                      alt="Generated Molecule"
                       className="mx-auto mb-4 max-w-xs"
                     />
                     <div className="grid grid-cols-2 gap-2">
