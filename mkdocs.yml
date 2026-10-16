@@ -1,10 +1,10 @@
 site_name: mol-platform
 site_description: Containerized microservice for molecular generation and analysis with RDKit
-site_author: Your Name
-site_url: https://bniladridas.github.io/mol-platform
+site_author: coccinella-labs
+site_url: https://coccinella-labs.github.io/molplatform
 
-repo_name: bniladridas/mol-platform
-repo_url: https://github.com/bniladridas/mol-platform
+repo_name: coccinella-labs/molplatform
+repo_url: https://github.com/coccinella-labs/molplatform
 
 theme:
   name: material
@@ -47,4 +47,4 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/bniladridas/mol-platform
+      link: https://github.com/coccinella-labs/molplatform
