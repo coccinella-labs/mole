@@ -1,6 +1,7 @@
 [project]
 name = "mol-platform"
 version = "1.0.0"
+license = "MIT"
 description = "Containerized microservice for molecular simulation and mutation analysis"
 authors = [
     {name = "Your Name", email = "your.email@example.com"},
