@@ -15,19 +15,27 @@ A containerized microservice for molecular generation and analysis. Generates mo
 
 ## Components
 
-`docker-compose up` starts four services, not one:
+`docker-compose up` starts six services, not one:
 
-| Service | Role | Port |
+| Service | Role | Exposed port |
 |---|---|---|
 | `backend` | FastAPI service, serves `/docs` and `/generate_molecule` | 8000 |
 | `frontend` | web interface | 3000 |
+| `nginx` | reverse proxy over `backend` and `frontend` | 80 |
+| `database` | Postgres 15, image `postgres:15-alpine` | none, internal only |
 | `redis` | broker for the Celery worker | 6379 |
 | `celery_worker` | Celery app, present for planned async work | none |
+
+`postgres_data` and `node_modules` are named volumes, not services.
 
 Generation is handled inline in the request: `/generate_molecule` calls
 `MoleculeGenerator` directly and does not enqueue to Celery. `config.py` labels
 the Celery settings as being for future async processing, so Redis and the
 worker are wired up but not yet on the request path.
+
+`DATABASE_URL` is injected into both `backend` and `celery_worker` by
+`docker-compose.yml` and is documented in `docs/configuration.md`, though no
+module under `backend/src` reads it yet.
 
 ---
 
@@ -59,7 +67,7 @@ mol-platform --api-key your-key --generate "CC(=O)OC1=CC=CC=C1C(=O)O"
 ## Access Points
 
 - **API Documentation:** http://localhost:8000/docs
-- **Frontend Interface:** http://localhost:3000
+- **Frontend Interface:** http://localhost:3000 (directly) or http://localhost:80 (through nginx)
 
 ---
 
