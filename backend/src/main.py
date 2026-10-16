@@ -63,7 +63,12 @@ class MoleculeGenerator:
         base_mol = Chem.MolFromSmiles(base_smiles)
 
         if base_mol is None:
-            raise ValueError(f"Invalid SMILES: {base_smiles}")
+            preview = base_smiles[:60]
+            suffix = "..." if len(base_smiles) > 60 else ""
+            raise ValueError(
+                f"Invalid SMILES: {preview!r}{suffix} "
+                f"({len(base_smiles)} characters)"
+            )
 
         mol = Chem.MolFromSmiles(base_smiles)
 
@@ -300,9 +305,16 @@ async def generate_molecule(request: MoleculeGenerationRequest):
             properties=properties,
         )
 
-    except Exception as e:
-        logger.error(f"Molecule generation error: {e}")
+    except ValueError as e:
+        logger.warning(f"Molecule generation rejected: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception:
+        logger.exception("Molecule generation failed")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal error during molecule generation",
+        )
 
 
 @app.get("/health", dependencies=[Depends(verify_api_key)])
