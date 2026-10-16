@@ -12,6 +12,28 @@ if (apiKey) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
 }
 
+/**
+ * Turn an axios failure into something a person can act on.
+ *
+ * A malformed SMILES, a rejected API key and an unreachable backend are three
+ * different problems, and reporting all three as 'Failed to generate molecule'
+ * left the real reason in the console only.
+ */
+function describeError(error) {
+  if (axios.isAxiosError(error)) {
+    const { response } = error;
+    if (!response) {
+      return 'cannot reach the backend';
+    }
+    const detail = response.data && response.data.detail;
+    if (typeof detail === 'string' && detail) {
+      return detail;
+    }
+    return `request failed with status ${response.status}`;
+  }
+  return error.message || 'unexpected error';
+}
+
 function App() {
   const [baseMolecule, setBaseMolecule] = useState('');
   const [numMutations, setNumMutations] = useState(3);
@@ -41,7 +63,7 @@ function App() {
       toast.success('Molecule generated successfully!');
     } catch (error) {
       console.error('Error generating molecule:', error);
-      toast.error('Failed to generate molecule');
+      toast.error(`Failed to generate molecule: ${describeError(error)}`);
     } finally {
       setIsLoading(false);
     }
