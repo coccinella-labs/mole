@@ -196,20 +196,23 @@ import subprocess
 
 # Health check
 result = subprocess.run(
-        ["mol-platform", "--api-key", "your-key", "--health"], capture_output=True
-    )
+    ["mol-platform", "--api-key", "your-key", "--health"], capture_output=True
+)
 print("Exit code:", result.returncode)
 
 # Generation
-result = subprocess.run([
-    "mol-platform",
-    "--api-key",
-    "your-key",
-    "--generate",
-    "CCO",
-    "--mutations",
-    "1",
-], capture_output=True)
+result = subprocess.run(
+    [
+        "mol-platform",
+        "--api-key",
+        "your-key",
+        "--generate",
+        "CCO",
+        "--mutations",
+        "1",
+    ],
+    capture_output=True,
+)
 print("Output:", result.stdout.decode())
 ```
 

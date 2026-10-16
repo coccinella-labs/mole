@@ -62,6 +62,7 @@ Current test coverage includes:
 import pytest
 from src.main import MoleculeGenerator
 
+
 def test_example():
     generator = MoleculeGenerator()
     result = generator.generate_random_molecule("CCO")
