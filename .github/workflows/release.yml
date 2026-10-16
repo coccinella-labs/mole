@@ -40,7 +40,7 @@ jobs:
       - name: Build binary
         run: |
           cd backend
-          pyinstaller --onefile src/cli.py --name mol-platform
+          pyinstaller --onefile src/cli.py --name mol-platform-${{ matrix.target }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -56,4 +56,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          files: backend/dist/mol-platform${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          files: backend/dist/mol-platform-${{ matrix.target }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}

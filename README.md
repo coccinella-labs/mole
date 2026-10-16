@@ -49,10 +49,22 @@ docker-compose up --build
 
 ## Command Line Testing
 
-For testing without the web interface, install and use the provided CLI tool:
+For testing without the web interface, use the CLI. The quickest route is the
+prebuilt binary attached to each tagged release, which needs no Python at all:
 
 ```bash
-# Build and install CLI (one-time)
+# Linux
+curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mol-platform-linux
+chmod +x mol-platform-linux
+```
+
+Use `mol-platform-macos` or `mol-platform-windows.exe` instead for those
+platforms. The `v1.0.0` release predates the per-target naming and has no macOS
+build, see `docs/cicd.md` for details.
+
+To build and install it from source instead:
+
+```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate && pip install build && python -m build
 pipx install dist/mol_platform-1.0.0-py3-none-any.whl
