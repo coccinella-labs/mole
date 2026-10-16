@@ -10,7 +10,7 @@ permissions:
   actions: read
 
 jobs:
-  build:
+  build-binary:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
