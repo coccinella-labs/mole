@@ -1,0 +1,41 @@
+name: Lock Merged
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  lock:
+    # The owner guard stops this running for pull requests from forks, where the
+    # token would not have write access anyway and the run would just fail.
+    if: github.event.pull_request.merged == true && github.repository_owner == 'coccinella-labs'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Lock PR
+        run: gh pr lock ${{ github.event.pull_request.number }} --repo ${{ github.repository }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete branch (skip if already deleted)
+        # Queue merges delete the head branch themselves, so this is the expected
+        # outcome on that path rather than an error.
+        run: |
+          response=$(gh api \
+            -X DELETE \
+            "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME" \
+            2>&1) || {
+            if echo "$response" | grep -q "Reference does not exist"; then
+              echo "Branch already deleted, skipping"
+            else
+              echo "Failed to delete branch: $response"
+              exit 1
+            fi
+          }
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
