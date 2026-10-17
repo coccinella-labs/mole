@@ -46,7 +46,12 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        # cypress 15.16.0 declares node "^20.1.0 || ^22.0.0 || >=24.0.0".
+        # Node 18 is outside that, and its bundled tsx throws on the removed
+        # --loader flag, so the run dies before any spec executes. Node 20 also
+        # reached end of life in April 2026, so 22 is the lowest target that
+        # both satisfies the constraint and is still supported.
+        node-version: '22'
 
     - name: Clean node_modules
       run: rm -rf frontend/node_modules
