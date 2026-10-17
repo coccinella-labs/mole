@@ -53,12 +53,25 @@ function App() {
         num_mutations: numMutations
       });
 
-      const { generated_smiles, molecular_image, properties, original_smiles } = response.data;
+      const {
+        generated_smiles,
+        molecular_image,
+        properties,
+        original_smiles,
+        requested_mutations,
+        successful_mutations,
+        failed_mutations,
+        mutated
+      } = response.data;
       setGeneratedMolecule({
         original_smiles: original_smiles,
         generated_smiles: generated_smiles,
         molecular_image: molecular_image,
-        properties: properties
+        properties: properties,
+        requested_mutations: requested_mutations,
+        successful_mutations: successful_mutations,
+        failed_mutations: failed_mutations,
+        mutated: mutated
       });
       toast.success('Molecule generated successfully!');
     } catch (error) {
@@ -133,6 +146,28 @@ function App() {
                         <strong>Generated SMILES:</strong>
                         <p className="text-sm">{generatedMolecule.generated_smiles}</p>
                       </div>
+                    </div>
+                    <div className="mt-4">
+                      <h4 className="font-semibold mb-2">
+                        Mutations Applied
+                      </h4>
+                      <p className="text-sm">
+                        {generatedMolecule.successful_mutations} of{' '}
+                        {generatedMolecule.requested_mutations} applied
+                        {generatedMolecule.failed_mutations > 0 && (
+                          <span className="text-gray-500">
+                            {' '}
+                            ({generatedMolecule.failed_mutations} rejected: no
+                            valid change could be made)
+                          </span>
+                        )}
+                      </p>
+                      {!generatedMolecule.mutated && (
+                        <p className="text-sm text-yellow-700 mt-1">
+                          No mutation could be applied. The structure shown is
+                          unchanged from the input.
+                        </p>
+                      )}
                     </div>
                     <div className="mt-4">
                       <h4 className="font-semibold mb-2">Molecular Properties</h4>

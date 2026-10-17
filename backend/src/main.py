@@ -2,12 +2,12 @@ import base64
 import io
 import logging
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
 
@@ -45,6 +45,30 @@ class MoleculeResponse(BaseModel):
     generated_smiles: str
     molecular_image: str
     properties: Dict[str, float]
+    requested_mutations: int = Field(
+        description="Logical mutations the caller asked for."
+    )
+    successful_mutations: int = Field(
+        description=(
+            "Mutations that produced their intended structural change and "
+            "passed RDKit sanitisation. A candidate that sanitises without "
+            "actually changing the structure does not count here."
+        )
+    )
+    failed_mutations: int = Field(
+        description=(
+            "Mutations where no candidate produced an intended, valid change, "
+            "either because sanitisation rejected it or because it left the "
+            "structure unchanged. Counted per logical mutation, not per "
+            "candidate proposal."
+        )
+    )
+    mutated: bool = Field(
+        description=(
+            "True when at least one mutation changed the molecule. When false, "
+            "generated_smiles is identical to original_smiles."
+        )
+    )
 
 
 def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -53,31 +77,75 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)
     return credentials.credentials
 
 
+class MutationResult(NamedTuple):
+    """Outcome of a generation request.
+
+    ``successful`` and ``failed`` count logical mutations, not candidate
+    proposals. A single requested mutation that examines several candidate
+    atoms and settles on one contributes exactly 1 to whichever counter it
+    lands in, so ``successful + failed == requested`` always holds for a
+    completed request.
+    """
+
+    mol: Chem.Mol
+    requested: int
+    successful: int
+    failed: int
+
+    @property
+    def mutated(self) -> bool:
+        return self.successful > 0
+
+
+# Upper bound on candidate proposals tried within one logical mutation. This is
+# a guard against pathological inputs, not a correctness parameter: exhausting
+# the candidate list simply means that mutation fails and is counted.
+MAX_MUTATION_CANDIDATES = 32
+
+
 class MoleculeGenerator:
     @staticmethod
     def generate_random_molecule(
         base_smiles: str,
         num_mutations: int = 3,
         mutation_types: Optional[List[str]] = None,
-    ) -> Chem.Mol:
-        base_mol = Chem.MolFromSmiles(base_smiles)
+    ) -> MutationResult:
+        mol = Chem.MolFromSmiles(base_smiles)
 
-        if base_mol is None:
+        if mol is None:
             preview = base_smiles[:60]
             suffix = "..." if len(base_smiles) > 60 else ""
             raise ValueError(
                 f"Invalid SMILES: {preview!r}{suffix} ({len(base_smiles)} characters)"
             )
 
-        mol = Chem.MolFromSmiles(base_smiles)
-
+        successful = 0
+        failed = 0
         for _ in range(num_mutations):
-            mol = MoleculeGenerator._random_mutation(mol, mutation_types)
+            mol, applied = MoleculeGenerator._random_mutation(mol, mutation_types)
+            if applied:
+                successful += 1
+            else:
+                failed += 1
 
-        return mol
+        return MutationResult(
+            mol=mol,
+            requested=num_mutations,
+            successful=successful,
+            failed=failed,
+        )
 
     @staticmethod
     def _random_mutation(mol, mutation_types=None):
+        """Apply one logical mutation.
+
+        Returns ``(mol, applied)``. ``applied`` is False when no candidate in
+        any of the selected operators produced a molecule that survives
+        sanitisation, in which case ``mol`` is returned unchanged.
+
+        Selecting among candidates is internal to this single mutation: the
+        caller counts it once, as either a success or a failure, never both.
+        """
         default_mutation_types = ["substituent", "bond_order", "atom_swap"]
         if mutation_types is None:
             mutation_types = default_mutation_types
@@ -96,154 +164,160 @@ class MoleculeGenerator:
         return mutation_func(mol)
 
     @staticmethod
-    def _add_random_substituent(mol):
-        # Ensure input is a valid molecule
-        if mol is None:
-            return None
+    def _candidate_order(items):
+        """Return items in random order, bounded by MAX_MUTATION_CANDIDATES.
 
+        Deterministic chemistry decisions belong to RDKit, so this only decides
+        which candidates get proposed and in what order. The bound keeps a
+        single logical mutation from trying an unbounded number of proposals on
+        a large input.
+        """
+        ordered = list(items)
+        random.shuffle(ordered)
+        return ordered[:MAX_MUTATION_CANDIDATES]
+
+    @staticmethod
+    def _is_acceptable(candidate):
+        """Return True when RDKit considers candidate usable by every consumer.
+
+        Sanitising once is not sufficient. These operators edit a copy of the
+        input, and changing an atom's element or a bond order leaves aromatic
+        flags describing the molecule as it was before the edit. Such a
+        candidate can pass the first SanitizeMol call and then fail every
+        kekulizing operation afterwards: SanitizeMol on a fresh copy,
+        MolToMolBlock, and the image rendering in generate_molecule_image all
+        raise KekulizeException. Caffeine at num_mutations=3 hit this in roughly
+        one request in a hundred.
+
+        Requiring sanitisation to be idempotent rules those candidates out at
+        acceptance time, where a different candidate can still be tried, rather
+        than letting one reach the response as a counted success.
+        """
         try:
-            # Possible substituents (single atoms for simplicity)
-            substituents = ["C", "N", "O", "Cl", "Br"]
+            Chem.SanitizeMol(candidate)
+        except Exception:
+            return False
+        try:
+            # A copy, so the accepted candidate is not re-flagged as a side
+            # effect of checking it.
+            Chem.SanitizeMol(Chem.Mol(candidate))
+        except Exception:
+            return False
+        return True
 
-            # Find atoms where substituents can be added
-            attachable_atoms = [
-                i
-                for i, atom in enumerate(mol.GetAtoms())
-                if atom.GetDegree() < 4  # Limit to atoms with fewer than 4 bonds
-            ]
+    @staticmethod
+    def _add_random_substituent(mol):
+        """Attach one substituent atom, trying successive candidates.
 
-            # If no attachable atoms, return original molecule
-            if not attachable_atoms:
-                return mol
+        The previous version chose a single atom by neighbour count and, when
+        sanitisation rejected the result, silently returned the input. That
+        filter counted bonds rather than valence, so it selected atoms that had
+        no room for another bond and discarded the whole mutation roughly half
+        the time on drug-like molecules.
 
-            # Randomly select an atom to attach substituent
-            attach_atom_idx = random.choice(attachable_atoms)
-            substituent_symbol = random.choice(substituents)
+        This version proposes candidates and lets RDKit decide, which keeps the
+        per-element chemistry in RDKit rather than in a table here. A candidate
+        counts as applied only if it survives sanitisation *and* adds exactly
+        one atom.
+        """
+        if mol is None:
+            return None, False
 
-            # Create editable molecule
-            rw_mol = Chem.RWMol(mol)
+        substituents = ["C", "N", "O", "Cl", "Br"]
+        expected_atoms = mol.GetNumAtoms() + 1
 
-            # Add new atom
-            new_atom = Chem.Atom(substituent_symbol)
-            new_idx = rw_mol.AddAtom(new_atom)
+        for attach_idx in MoleculeGenerator._candidate_order(range(mol.GetNumAtoms())):
+            for symbol in MoleculeGenerator._candidate_order(substituents):
+                rw_mol = Chem.RWMol(Chem.Mol(mol))
+                new_idx = rw_mol.AddAtom(Chem.Atom(symbol))
+                rw_mol.AddBond(attach_idx, new_idx, Chem.BondType.SINGLE)
+                candidate = rw_mol.GetMol()
+                if not MoleculeGenerator._is_acceptable(candidate):
+                    continue
+                if candidate.GetNumAtoms() != expected_atoms:
+                    continue
+                return candidate, True
 
-            # Add bond between attach atom and new atom
-            rw_mol.AddBond(attach_atom_idx, new_idx, Chem.BondType.SINGLE)
-
-            # Get immutable molecule
-            modified_mol = rw_mol.GetMol()
-            try:
-                Chem.SanitizeMol(modified_mol)
-                return modified_mol
-            except Exception:
-                return mol
-        except Exception as e:
-            print(f"Error in _add_random_substituent: {e}")
-            return mol
+        return mol, False
 
     @staticmethod
     def _modify_bond_order(mol):
-        # Ensure input is a valid molecule
+        """Change one bond order, trying successive candidates.
+
+        Sanitisation alone is not sufficient evidence here. On an aromatic bond
+        RDKit re-perceives aromaticity after sanitisation, so setting a bond to
+        SINGLE or DOUBLE is silently undone and the candidate canonicalises back
+        to the input. Counting those as applied overstated success badly: on
+        caffeine, 90% of accepted candidates made no structural change at all.
+
+        A candidate therefore counts as applied only if the multiset of bond
+        orders actually differs from the input.
+        """
         if mol is None:
-            return None
+            return None, False
 
-        try:
-            # Convert mol to a canonical SMILES
-            mol_smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
-            mol = Chem.MolFromSmiles(mol_smiles)
+        bond_orders = [
+            Chem.BondType.SINGLE,
+            Chem.BondType.DOUBLE,
+            Chem.BondType.TRIPLE,
+        ]
+        original_orders = sorted(b.GetBondTypeAsDouble() for b in mol.GetBonds())
 
-            # Get all bonds
-            bonds = mol.GetBonds()
-            if not bonds:
-                return mol
+        for bond_idx in MoleculeGenerator._candidate_order(range(mol.GetNumBonds())):
+            bond = mol.GetBondWithIdx(bond_idx)
+            options = [bo for bo in bond_orders if bo != bond.GetBondType()]
+            for new_bond_type in MoleculeGenerator._candidate_order(options):
+                rw_mol = Chem.RWMol(Chem.Mol(mol))
+                rw_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+                rw_mol.AddBond(
+                    bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), new_bond_type
+                )
+                candidate = rw_mol.GetMol()
+                if not MoleculeGenerator._is_acceptable(candidate):
+                    continue
+                changed = sorted(b.GetBondTypeAsDouble() for b in candidate.GetBonds())
+                if changed == original_orders:
+                    continue
+                return candidate, True
 
-            # Randomly select a bond
-            bond_to_modify = random.choice(bonds)
-
-            # Prepare bond order options
-            bond_orders = [
-                Chem.BondType.SINGLE,
-                Chem.BondType.DOUBLE,
-                Chem.BondType.TRIPLE,
-            ]
-
-            # Remove the current bond order
-            current_bond_type = bond_to_modify.GetBondType()
-            bond_orders = [bo for bo in bond_orders if bo != current_bond_type]
-
-            # Select a new bond order
-            new_bond_type = random.choice(bond_orders)
-
-            # Create an editable molecule
-            rw_mol = Chem.RWMol(mol)
-
-            # Modify the bond
-            start_atom = int(bond_to_modify.GetBeginAtomIdx())
-            end_atom = int(bond_to_modify.GetEndAtomIdx())
-
-            # Remove the existing bond
-            rw_mol.RemoveBond(start_atom, end_atom)
-
-            # Add a new bond with the modified order
-            rw_mol.AddBond(start_atom, end_atom, new_bond_type)
-
-            # Convert back to immutable molecule
-            modified_mol = rw_mol.GetMol()
-            try:
-                Chem.SanitizeMol(modified_mol)
-                return modified_mol
-            except Exception:
-                return mol
-        except Exception as e:
-            print(f"Error in _modify_bond_order: {e}")
-            return mol
+        return mol, False
 
     @staticmethod
     def _swap_atom(mol):
-        # Ensure input is a valid molecule
+        """Replace one atom element, trying successive candidates.
+
+        A candidate counts as applied only if at least one atomic number
+        actually differs from the input, not merely if it sanitises.
+        """
         if mol is None:
-            return None
+            return None, False
 
-        try:
-            # Get atom types to swap
-            atom_types = ["C", "N", "O", "S", "P"]
+        atom_types = ["C", "N", "O", "S", "P"]
+        periodic_table = Chem.GetPeriodicTable()
+        original_elements = sorted(a.GetAtomicNum() for a in mol.GetAtoms())
 
-            # Find atoms that can be swapped
-            swappable_atoms = [
-                i
-                for i, atom in enumerate(mol.GetAtoms())
-                if atom.GetSymbol() in atom_types
-            ]
+        swappable = [
+            i for i, atom in enumerate(mol.GetAtoms()) if atom.GetSymbol() in atom_types
+        ]
+        for atom_idx in MoleculeGenerator._candidate_order(swappable):
+            current = mol.GetAtomWithIdx(atom_idx).GetSymbol()
+            options = [at for at in atom_types if at != current]
+            for symbol in MoleculeGenerator._candidate_order(options):
+                rw_mol = Chem.RWMol(Chem.Mol(mol))
+                rw_mol.GetAtomWithIdx(atom_idx).SetAtomicNum(
+                    periodic_table.GetAtomicNumber(symbol)
+                )
+                candidate = rw_mol.GetMol()
+                if not MoleculeGenerator._is_acceptable(candidate):
+                    continue
+                if (
+                    sorted(a.GetAtomicNum() for a in candidate.GetAtoms())
+                    == original_elements
+                ):
+                    continue
+                return candidate, True
 
-            # If no swappable atoms, return original molecule
-            if not swappable_atoms:
-                return mol
-
-            # Randomly select an atom to swap
-            atom_to_swap_idx = random.choice(swappable_atoms)
-            current_atom = mol.GetAtomWithIdx(atom_to_swap_idx).GetSymbol()
-
-            # Get possible swap atoms (excluding current atom)
-            swap_options = [at for at in atom_types if at != current_atom]
-            new_atom_symbol = random.choice(swap_options)
-
-            # Create editable molecule and swap atom
-            rw_mol = Chem.RWMol(mol)
-            pt = Chem.GetPeriodicTable()
-            rw_mol.GetAtomWithIdx(atom_to_swap_idx).SetAtomicNum(
-                pt.GetAtomicNumber(new_atom_symbol)
-            )
-
-            # Get immutable molecule
-            modified_mol = rw_mol.GetMol()
-            try:
-                Chem.SanitizeMol(modified_mol)
-                return modified_mol
-            except Exception:
-                return mol
-        except Exception as e:
-            print(f"Error in _swap_atom: {e}")
-            return mol
+        return mol, False
 
     @staticmethod
     def calculate_properties(smiles: str) -> Dict[str, float]:
@@ -281,27 +355,23 @@ async def generate_molecule(request: MoleculeGenerationRequest):
         )
 
     try:
-        generator = MoleculeGenerator()
-
-        # Generate molecule
-        generated_mol = generator.generate_random_molecule(
+        result = MoleculeGenerator.generate_random_molecule(
             request.base_smiles, request.num_mutations, request.mutation_types
         )
 
-        # Convert to SMILES
-        generated_smiles = Chem.MolToSmiles(generated_mol)
-
-        # Calculate properties
-        properties = generator.calculate_properties(generated_smiles)
-
-        # Generate molecule image
-        molecule_image = generator.generate_molecule_image(generated_mol)
+        generated_smiles = Chem.MolToSmiles(result.mol)
+        properties = MoleculeGenerator.calculate_properties(generated_smiles)
+        molecule_image = MoleculeGenerator.generate_molecule_image(result.mol)
 
         return MoleculeResponse(
             original_smiles=request.base_smiles,
             generated_smiles=generated_smiles,
             molecular_image=molecule_image,
             properties=properties,
+            requested_mutations=result.requested,
+            successful_mutations=result.successful,
+            failed_mutations=result.failed,
+            mutated=result.mutated,
         )
 
     except ValueError as e:

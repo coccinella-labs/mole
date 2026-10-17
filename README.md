@@ -118,9 +118,33 @@ Facilitates the creation of molecular variants through random mutations.
     "H-Bond Donors": 1,
     "H-Bond Acceptors": 3,
     "Topological Polar Surface Area": 63.6
-  }
+  },
+  "requested_mutations": 3,
+  "successful_mutations": 3,
+  "failed_mutations": 0,
+  "mutated": true
 }
 ```
+
+**Mutation Counters:**
+
+`requested_mutations`, `successful_mutations` and `failed_mutations` count
+logical mutations, not candidate attempts. One requested mutation examines
+several candidate positions and accepts the first that both passes RDKit
+sanitisation and makes the structural change that mutation type promises, so
+`successful_mutations + failed_mutations == requested_mutations` always holds
+for a completed request.
+
+A mutation counts as successful only if it really changed the structure. A
+candidate that sanitises but leaves the molecule unchanged does **not** count
+as successful, because RDKit re-perceives aromaticity during sanitisation and
+can silently undo a bond order edit inside an aromatic ring. Such a candidate
+is counted in `failed_mutations` instead.
+
+`mutated` is `true` when at least one mutation changed the structure; when it
+is `false`, the returned molecule is identical to the input and no mutation was
+applied. The response still returns `200` in every completed case: the counters,
+not the status code, distinguish real work from a no-op.
 
 **Available Mutations:**
 - `substituent`: Introduces substituent groups
