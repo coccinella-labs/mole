@@ -10,13 +10,13 @@ pydantic-settings
 # psycopg2-binary==2.9.9
 
 # Molecular Libraries
-rdkit==2025.9.3
+rdkit==2026.9.1
 numpy
 Pillow
 
 # Task Queue
 celery==5.6.3
-redis==5.0.1
+redis==8.1.0
 
 # Authentication
 passlib==1.7.4
@@ -26,10 +26,10 @@ python-multipart==0.0.32
 # asyncio is built-in
 
 # Validation
-email-validator==2.1.1
+email-validator==2.3.0
 
 # Deployment & Monitoring
-sentry-sdk==2.68.1
+sentry-sdk==2.72.0
 
 # Testing
 pytest==9.1.1
@@ -39,4 +39,4 @@ ruff
 
 # Utilities
 python-dotenv==1.2.3
-requests==2.33.0
+requests==2.34.2
