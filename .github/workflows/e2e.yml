@@ -38,9 +38,13 @@ jobs:
       run: |
         docker-compose up -d
         docker ps
-        docker exec molplatform_frontend_1 ls -la /usr/share/nginx/html || echo 'html dir not found'
-        docker logs molplatform_backend_1
-        docker logs molplatform_frontend_1
+        # Reference services by their compose service name, not by container
+        # name. Compose builds container names from the checkout directory,
+        # which GitHub names after the repository, so a hardcoded
+        # molplatform_backend_1 breaks the moment the repository is renamed.
+        docker-compose exec frontend ls -la /usr/share/nginx/html || echo 'html dir not found'
+        docker-compose logs backend
+        docker-compose logs frontend
         # Wait for backend to be ready
         timeout 60 bash -c 'until curl -f -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:8000/health; do sleep 2; done'
         # Wait for frontend to be ready

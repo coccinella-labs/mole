@@ -1,4 +1,4 @@
-# mol-platform
+# Mole
 
 A **containerized microservice application** for molecular generation and analysis using RDKit — designed for reproducibility, modularity, and scalability using Docker. Generates molecular variants through random mutations with secure API access.
 

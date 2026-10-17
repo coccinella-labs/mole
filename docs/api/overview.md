@@ -1,6 +1,6 @@
 # API Overview
 
-mol-platform provides a RESTful API for molecular generation and analysis.
+Mole provides a RESTful API for molecular generation and analysis.
 
 ## Base URL
 

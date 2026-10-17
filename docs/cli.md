@@ -1,10 +1,10 @@
 # Command Line Interface
 
-The `mol-platform` CLI provides command-line access to molecular generation and testing capabilities.
+The `Mole` CLI provides command-line access to molecular generation and testing capabilities.
 
 ## Overview
 
-The `mol-platform` CLI talks directly to the backend API, without the web interface, making it ideal for:
+The `Mole` CLI talks directly to the backend API, without the web interface, making it ideal for:
 
 - Automated testing
 - Scripting and integration
@@ -144,7 +144,7 @@ Examples:
 
 **Interactive Session Example:**
 ```
-🧬 mol-platform Interactive CLI
+🧬 Mole Interactive CLI
 Connected to: http://localhost:8000
 Type 'help' for commands, 'quit' to exit
 --------------------------------------------------
@@ -167,7 +167,7 @@ Goodbye! 👋
 ## Prerequisites
 
 - Python 3.12+
-- Running the mol-platform backend server
+- Running the Mole backend server
 - `requests` library (included in backend environment)
 
 ## Error Handling

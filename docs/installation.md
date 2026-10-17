@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers how to install and set up mol-platform for development and deployment.
+This guide covers how to install and set up Mole for development and deployment.
 
 ## Prerequisites
 

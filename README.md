@@ -54,13 +54,19 @@ prebuilt binary attached to each tagged release, which needs no Python at all:
 
 ```bash
 # Linux
-curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mol-platform-linux
-chmod +x mol-platform-linux
+curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mole-linux
+chmod +x mole-linux
 ```
 
-Use `mol-platform-macos` or `mol-platform-windows.exe` instead for those
+Use `mole-macos` or `mole-windows.exe` instead for those
 platforms. The `v1.0.0` release predates the per-target naming and has no macOS
 build, see `docs/cicd.md` for details.
+
+Asset names changed with the rename to Mole. Releases before `v1.1.0` publish
+`mol-platform-<target>` and are left untouched, so the `latest/download/mole-*`
+links above only resolve once a `v1.1.0`-or-later release exists. Until then,
+use the per-tag path for the current asset name, for example
+`releases/download/v1.0.0/mol-platform`.
 
 To build and install it from source instead:
 

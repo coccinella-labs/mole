@@ -1,6 +1,6 @@
 # Testing
 
-Comprehensive testing ensures mol-platform works correctly.
+Comprehensive testing ensures Mole works correctly.
 
 ## Test Structure
 
@@ -77,7 +77,7 @@ import App from './App';
 
 test('renders app', () => {
   render(<App />);
-  expect(screen.getByText('mol-platform')).toBeInTheDocument();
+  expect(screen.getByText('Mole')).toBeInTheDocument();
 });
 ```
 

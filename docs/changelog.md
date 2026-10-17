@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to mol-platform will be documented in this file.
+All notable changes to Mole will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/specification/v1.0).
@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/specificati
 - Official 1.0.0 release with all improvements
 
 ### Added
-- Initial release of mol-platform: containerized microservice for molecular simulation
+- Initial release of Mole: containerized microservice for molecular simulation
 - Molecule generation with random mutations (substituents, bond orders, atom swaps)
 - REST API with FastAPI backend
 - React frontend with visualization
