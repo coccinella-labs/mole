@@ -207,6 +207,15 @@ class MoleculeGenerator:
         in full and still decides acceptance; only what RDKit prints while
         deciding is muted. Anything logged later in the request, including a
         real failure, is unaffected.
+
+        rdBase.BlockLogs is process-global, not thread-scoped: while this block
+        is held, a warning logged by any other thread in the process is
+        discarded too. That is currently safe because the endpoint is async with
+        no await in its body, so a mutation runs to completion on the event loop
+        and nothing can interleave in-process, and because separate uvicorn
+        workers are separate processes with separate logger state. It would stop
+        being safe if the handler ever yielded mid-mutation or a background
+        thread started using RDKit.
         """
         with rdBase.BlockLogs():
             return MoleculeGenerator._is_acceptable(candidate)

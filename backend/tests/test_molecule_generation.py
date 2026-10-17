@@ -337,23 +337,36 @@ def test_suppression_does_not_change_which_candidates_are_accepted():
     """Suppression is a logging concern only.
 
     The same candidates must be accepted or rejected with and without the
-    suppression wrapper, otherwise counters would silently shift.
+    suppression wrapper, otherwise counters would silently shift. All three
+    operators are covered, not just one: _modify_bond_order and
+    _add_random_substituent are the two that generate most of the rejections
+    this change silences, so they are the ones that matter to check.
     """
-    for base_smiles in MOLECULES:
-        for seed in range(25):
-            mol = Chem.MolFromSmiles(base_smiles)
+    for operator_name, operator in (
+        ("substituent", MoleculeGenerator._add_random_substituent),
+        ("bond_order", MoleculeGenerator._modify_bond_order),
+        ("atom_swap", MoleculeGenerator._swap_atom),
+    ):
+        for base_smiles in MOLECULES:
+            for seed in range(15):
+                mol = Chem.MolFromSmiles(base_smiles)
 
-            # Reseed before each call: the operators draw from the shared random
-            # module, so identical decisions require identical inputs.
-            random.seed(seed)
-            with rdBase.BlockLogs():
-                mutated_with, applied_with = MoleculeGenerator._swap_atom(mol)
+                # Reseed before each call: the operators draw from the shared
+                # random module, so identical decisions require identical inputs.
+                random.seed(seed)
+                with rdBase.BlockLogs():
+                    mutated_with, applied_with = operator(mol)
 
-            random.seed(seed)
-            mutated_without, applied_without = MoleculeGenerator._swap_atom(mol)
+                random.seed(seed)
+                mutated_without, applied_without = operator(mol)
 
-            assert applied_with == applied_without
-            assert Chem.MolToSmiles(mutated_with) == Chem.MolToSmiles(mutated_without)
+                assert applied_with == applied_without, (
+                    f"{operator_name} on {base_smiles!r} seed {seed} changed its "
+                    f"decision under suppression"
+                )
+                assert Chem.MolToSmiles(mutated_with) == Chem.MolToSmiles(
+                    mutated_without
+                ), f"{operator_name} on {base_smiles!r} seed {seed} changed output"
 
 
 def test_counters_unaffected_by_suppression():
