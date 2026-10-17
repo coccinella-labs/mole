@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import Descriptors, Draw
 
 from .config import settings
@@ -194,6 +194,33 @@ class MoleculeGenerator:
         return ordered[:MAX_MUTATION_CANDIDATES]
 
     @staticmethod
+    def _validate_candidate(candidate):
+        """Assess a candidate with RDKit's expected rejections kept out of the log.
+
+        Trial-and-validate asks RDKit to judge many candidates and discards most
+        of them, and RDKit logs each rejection before raising. That is the normal
+        path here, not a fault, but it buried genuine diagnostics: 872 stderr
+        lines came out of 75 generations before this change.
+
+        The suppression is scoped to the validation call alone. It does not
+        change which candidates are accepted, because _is_acceptable still runs
+        in full and still decides acceptance; only what RDKit prints while
+        deciding is muted. Anything logged later in the request, including a
+        real failure, is unaffected.
+
+        rdBase.BlockLogs is process-global, not thread-scoped: while this block
+        is held, a warning logged by any other thread in the process is
+        discarded too. That is currently safe because the endpoint is async with
+        no await in its body, so a mutation runs to completion on the event loop
+        and nothing can interleave in-process, and because separate uvicorn
+        workers are separate processes with separate logger state. It would stop
+        being safe if the handler ever yielded mid-mutation or a background
+        thread started using RDKit.
+        """
+        with rdBase.BlockLogs():
+            return MoleculeGenerator._is_acceptable(candidate)
+
+    @staticmethod
     def _is_acceptable(candidate):
         """Return True when RDKit considers candidate usable by every consumer.
 
@@ -249,7 +276,7 @@ class MoleculeGenerator:
                 new_idx = rw_mol.AddAtom(Chem.Atom(symbol))
                 rw_mol.AddBond(attach_idx, new_idx, Chem.BondType.SINGLE)
                 candidate = rw_mol.GetMol()
-                if not MoleculeGenerator._is_acceptable(candidate):
+                if not MoleculeGenerator._validate_candidate(candidate):
                     continue
                 if candidate.GetNumAtoms() != expected_atoms:
                     continue
@@ -290,7 +317,7 @@ class MoleculeGenerator:
                     bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), new_bond_type
                 )
                 candidate = rw_mol.GetMol()
-                if not MoleculeGenerator._is_acceptable(candidate):
+                if not MoleculeGenerator._validate_candidate(candidate):
                     continue
                 changed = sorted(b.GetBondTypeAsDouble() for b in candidate.GetBonds())
                 if changed == original_orders:
@@ -325,7 +352,7 @@ class MoleculeGenerator:
                     periodic_table.GetAtomicNumber(symbol)
                 )
                 candidate = rw_mol.GetMol()
-                if not MoleculeGenerator._is_acceptable(candidate):
+                if not MoleculeGenerator._validate_candidate(candidate):
                     continue
                 if (
                     sorted(a.GetAtomicNum() for a in candidate.GetAtoms())
