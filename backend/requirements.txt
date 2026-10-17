@@ -26,7 +26,7 @@ python-multipart==0.0.32
 # asyncio is built-in
 
 # Validation
-email-validator==2.1.1
+email-validator==2.3.0
 
 # Deployment & Monitoring
 sentry-sdk==2.68.1
