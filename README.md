@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Coccinella-Labs/molplatform/main/.github/assets/thumbnail.png" alt="molplatform" width="100%">
+  <img src="https://raw.githubusercontent.com/coccinella-labs/mole/main/.github/assets/thumbnail.png" alt="molplatform" width="100%">
 </p>
 
-# molplatform
+# Mole
 
 A containerized microservice for molecular generation and analysis. Generates molecular variants through random mutations using RDKit. Features a REST API, web interface, and CLI tool with secure API key authentication.
 
@@ -54,19 +54,17 @@ prebuilt binary attached to each tagged release, which needs no Python at all:
 
 ```bash
 # Linux
-curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mole-linux
-chmod +x mole-linux
+curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.0.0/mol-platform
+chmod +x mol-platform
 ```
 
-Use `mole-macos` or `mole-windows.exe` instead for those
-platforms. The `v1.0.0` release predates the per-target naming and has no macOS
-build, see `docs/cicd.md` for details.
+That is the current `v1.0.0` asset, which predates the per-target naming, so it
+is a Linux build with no macOS or Windows equivalent. See `docs/cicd.md`.
 
-Asset names changed with the rename to Mole. Releases before `v1.1.0` publish
-`mol-platform-<target>` and are left untouched, so the `latest/download/mole-*`
-links above only resolve once a `v1.1.0`-or-later release exists. Until then,
-use the per-tag path for the current asset name, for example
-`releases/download/v1.0.0/mol-platform`.
+Asset names change at `v1.1.0`. That release will publish `mole-linux`,
+`mole-macos` and `mole-windows.exe`. Existing assets are not renamed or moved, so
+links pinned to an existing tag keep their current names, and
+`releases/latest/download/mole-*` does not resolve until `v1.1.0` exists.
 
 To build and install it from source instead:
 

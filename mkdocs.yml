@@ -1,10 +1,10 @@
 site_name: Mole
 site_description: Containerized microservice for molecular generation and analysis with RDKit
 site_author: coccinella-labs
-site_url: https://coccinella-labs.github.io/molplatform
+site_url: https://coccinella-labs.github.io/mole
 
-repo_name: coccinella-labs/molplatform
-repo_url: https://github.com/coccinella-labs/molplatform
+repo_name: coccinella-labs/mole
+repo_url: https://github.com/coccinella-labs/mole
 
 theme:
   name: material
@@ -47,4 +47,4 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/coccinella-labs/molplatform
+      link: https://github.com/coccinella-labs/mole

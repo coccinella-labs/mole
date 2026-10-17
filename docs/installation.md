@@ -25,8 +25,8 @@ brew install git
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/coccinella-labs/molplatform.git
-cd mol-platform
+git clone https://github.com/coccinella-labs/mole.git
+cd mole
 ```
 
 ### 2. Choose Your Installation Method
