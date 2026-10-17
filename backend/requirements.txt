@@ -33,10 +33,10 @@ sentry-sdk==2.72.0
 
 # Testing
 pytest==9.1.1
-httpx==0.25.2
+httpx==0.28.1
 ruff
 # asynctest deprecated
 
 # Utilities
-python-dotenv==1.2.3
+python-dotenv==1.2.4
 requests==2.34.2
