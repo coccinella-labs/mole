@@ -1,6 +1,8 @@
+import os
 import random
+import tempfile
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 
 from src.main import MoleculeGenerator
 
@@ -242,3 +244,158 @@ def test_generate_with_custom_mutations():
     # Test with empty mutation types (should use defaults)
     result = MoleculeGenerator.generate_random_molecule(base_smiles, mutation_types=[])
     assert result.mol is not None
+
+
+def capture_rdkit_stderr(action):
+    """Return whatever RDKit writes to stderr while action runs.
+
+    RDKit writes through the C++ logger straight to file descriptor 2, so this
+    redirects the descriptor rather than using a Python-level stream, otherwise
+    the output would be missed entirely. A temporary file is used instead of a
+    pipe so that a chatty action cannot fill the pipe buffer and deadlock.
+    """
+    with tempfile.TemporaryFile() as sink:
+        saved = os.dup(2)
+        try:
+            os.dup2(sink.fileno(), 2)
+            action()
+        finally:
+            os.dup2(saved, 2)
+            os.close(saved)
+        sink.seek(0)
+        return sink.read().decode(errors="replace")
+
+
+def test_expected_candidate_warnings_are_suppressed():
+    """A rejection logged during candidate validation must not reach stderr.
+
+    Trial-and-validate rejects most candidates by design, and RDKit logs each
+    rejection. The helper that performs validation mutes that, because it is
+    expected output rather than a fault.
+    """
+    # A candidate RDKit rejects loudly: oxygen with four bonds triggers the
+    # explicit-valence warning that the operators would otherwise emit for every
+    # rejected proposal.
+    invalid = Chem.RWMol(Chem.MolFromSmiles("CCO"))
+    for _ in range(3):
+        new_idx = invalid.AddAtom(Chem.Atom(8))
+        invalid.AddBond(2, new_idx, Chem.BondType.SINGLE)
+    candidate = invalid.GetMol()
+
+    # Guard the fixture: the warning must exist before suppression is tested,
+    # otherwise this test would pass for the wrong reason.
+    unsuppressed = capture_rdkit_stderr(
+        lambda: MoleculeGenerator._is_acceptable(candidate)
+    )
+    assert "valence" in unsuppressed.lower(), (
+        f"fixture no longer provokes an RDKit warning: {unsuppressed!r}"
+    )
+
+    suppressed = capture_rdkit_stderr(
+        lambda: MoleculeGenerator._validate_candidate(candidate)
+    )
+    assert suppressed == "", f"expected silence during validation, got: {suppressed!r}"
+
+
+def test_warnings_outside_candidate_validation_remain_visible():
+    """Suppression must not leak past the validation call.
+
+    A real diagnostic emitted immediately after validation still has to reach
+    stderr, otherwise this change would hide the failures it exists to make
+    readable.
+    """
+    marker = "MARKER-AFTER-VALIDATION"
+
+    def emit():
+        rdBase.LogWarningMsg(marker)
+
+    output = capture_rdkit_stderr(emit)
+    assert marker in output, f"expected {marker!r} to be visible, got: {output!r}"
+
+
+def test_suppression_is_restored_after_validation():
+    """After a suppressed block, logging returns to normal.
+
+    This pins the ordering: a warning raised before validation is visible, one
+    raised during validation is not, and one raised after is visible again.
+    """
+    before = capture_rdkit_stderr(lambda: rdBase.LogWarningMsg("BEFORE"))
+
+    def during():
+        with rdBase.BlockLogs():
+            rdBase.LogWarningMsg("DURING")
+
+    inside = capture_rdkit_stderr(during)
+    after = capture_rdkit_stderr(lambda: rdBase.LogWarningMsg("AFTER"))
+
+    assert "BEFORE" in before
+    assert "DURING" not in inside
+    assert "AFTER" in after
+
+
+def test_suppression_does_not_change_which_candidates_are_accepted():
+    """Suppression is a logging concern only.
+
+    The same candidates must be accepted or rejected with and without the
+    suppression wrapper, otherwise counters would silently shift.
+    """
+    for base_smiles in MOLECULES:
+        for seed in range(25):
+            mol = Chem.MolFromSmiles(base_smiles)
+
+            # Reseed before each call: the operators draw from the shared random
+            # module, so identical decisions require identical inputs.
+            random.seed(seed)
+            with rdBase.BlockLogs():
+                mutated_with, applied_with = MoleculeGenerator._swap_atom(mol)
+
+            random.seed(seed)
+            mutated_without, applied_without = MoleculeGenerator._swap_atom(mol)
+
+            assert applied_with == applied_without
+            assert Chem.MolToSmiles(mutated_with) == Chem.MolToSmiles(mutated_without)
+
+
+def test_counters_unaffected_by_suppression():
+    """The counter invariant must hold with suppression in place."""
+    for base_smiles in ("CCO", "CN1C=NC2=C1C(=O)N(C(=O)N2C)"):
+        for n in (0, 1, 3):
+            random.seed(7)
+            result = MoleculeGenerator.generate_random_molecule(base_smiles, n)
+            assert result.successful + result.failed == result.requested == n
+            assert result.mutated == (result.successful > 0)
+
+
+def test_warning_from_outside_candidate_validation_survives_an_operator_call():
+    """Suppression must not swallow diagnostics raised elsewhere in an operator.
+
+    _candidate_order runs inside the operator but outside _validate_candidate,
+    so a warning raised there must still be visible. This is the test that
+    distinguishes a narrowly scoped block from one wrapped around the whole
+    operator, which would silently hide genuine problems.
+    """
+    original = MoleculeGenerator._candidate_order
+    marker = "MARKER-DURING-CANDIDATE-ORDER"
+
+    def noisy(items):
+        rdBase.LogWarningMsg(marker)
+        return original(items)
+
+    for base_smiles in MOLECULES:
+        random.seed(3)
+        MoleculeGenerator._candidate_order = staticmethod(noisy)
+        try:
+            # Routed through _random_mutation rather than a single operator, so
+            # that widening the suppression to cover the whole operator call
+            # would actually be exercised here and caught.
+            output = capture_rdkit_stderr(
+                lambda b=base_smiles: MoleculeGenerator._random_mutation(
+                    Chem.MolFromSmiles(b), None
+                )
+            )
+        finally:
+            MoleculeGenerator._candidate_order = staticmethod(original)
+        assert marker in output, (
+            f"a warning raised outside candidate validation was suppressed for "
+            f"{base_smiles!r}: {output!r}"
+        )
