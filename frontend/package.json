@@ -6,10 +6,10 @@
     "@heroicons/react": "^2.1.1",
     "@tailwindcss/forms": "^0.5.7",
     "axios": "^1.20.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-toastify": "^11.1.0",
-    "react-tooltip": "^5.26.3"
+    "react-tooltip": "^6.0.8"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -34,8 +34,8 @@
   "devDependencies": {
     "tailwindcss": "^3.4.3",
     "postcss": "^8.5.26",
-    "autoprefixer": "^10.4.18",
-    "cypress": "^15.16.0",
+    "autoprefixer": "^10.6.1",
+    "cypress": "^16.1.1",
     "react-scripts": "5.0.1"
   }
 }
