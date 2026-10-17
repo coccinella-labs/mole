@@ -80,12 +80,14 @@ before this was corrected, 90% of accepted `bond_order` candidates on caffeine
 changed nothing.
 
 Because of this, heavily aromatic molecules report a higher `failed_mutations`
-than saturated ones. Caffeine fails about 7% of logical mutations this way, which
-is an accurate report rather than a defect.
+than saturated ones. Caffeine fails about 0.1% of logical mutations this way,
+which is an accurate report rather than a defect.
 
-When `mutated` is `false`, no mutation was applied and `generated_smiles` is
-identical to `original_smiles`. The request still returns `200`; the counters
-are how a caller distinguishes that case from real work.
+When `mutated` is `false`, no mutation was applied and the returned molecule has
+the same structure as the input. `generated_smiles` is canonicalised, so its
+string may differ from `original_smiles` even in that case. The request still
+returns `200`; the counters are how a caller distinguishes that case from real
+work.
 
 **Mutation Types:**
 - `substituent`: Add random substituents

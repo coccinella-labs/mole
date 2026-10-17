@@ -65,8 +65,10 @@ class MoleculeResponse(BaseModel):
     )
     mutated: bool = Field(
         description=(
-            "True when at least one mutation changed the molecule. When false, "
-            "generated_smiles is identical to original_smiles."
+            "True when at least one mutation changed the molecule. When false, no "
+            "mutation was applied and the molecule has the same structure as the "
+            "input. generated_smiles is canonicalised, so its string may differ "
+            "from original_smiles even in that case."
         )
     )
 

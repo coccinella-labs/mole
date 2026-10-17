@@ -142,9 +142,11 @@ can silently undo a bond order edit inside an aromatic ring. Such a candidate
 is counted in `failed_mutations` instead.
 
 `mutated` is `true` when at least one mutation changed the structure; when it
-is `false`, the returned molecule is identical to the input and no mutation was
-applied. The response still returns `200` in every completed case: the counters,
-not the status code, distinguish real work from a no-op.
+is `false`, no mutation was applied and the returned molecule has the same
+structure as the input. `generated_smiles` is canonicalised, so its string
+representation may differ from `original_smiles` even in that case. The
+response still returns `200` in every completed case: the counters, not the
+status code, distinguish real work from a no-op.
 
 **Available Mutations:**
 - `substituent`: Introduces substituent groups
