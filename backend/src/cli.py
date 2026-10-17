@@ -271,7 +271,10 @@ Interactive mode:
         parser.print_help()
         return 1
 
-    if not 0 <= args.mutations <= MAX_MUTATIONS_PER_REQUEST:
+    # Only relevant when a molecule is actually generated. --health alone does
+    # not use it, and rejecting an unused value would break a call that works
+    # today, such as `--health --mutations 50`.
+    if args.generate and not 0 <= args.mutations <= MAX_MUTATIONS_PER_REQUEST:
         # argparse has already rejected non-integers via type=int. This catches
         # the range before any request is made, matching the interactive path.
         print(

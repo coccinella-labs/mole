@@ -155,6 +155,41 @@ def test_argparse_path_rejects_above_bound(value, monkeypatch):
     assert str(MAX_MUTATIONS_PER_REQUEST) in out.getvalue()
 
 
+@pytest.mark.parametrize("value", ["-1", "-10", "50"])
+def test_health_alone_ignores_the_mutation_count(value, monkeypatch):
+    """--mutations is only read for generation, so --health must not trip on it.
+
+    Added after self-review found the range check firing for a value the run
+    never uses. On main, `--health --mutations 50` reaches the health endpoint;
+    an unconditional check rejects it before connecting, which is a
+    behaviour change unrelated to validating generation.
+    """
+    seen = []
+
+    class Resp:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {"status": "healthy", "version": "0"}
+
+    def fake_get(url, headers=None, **kwargs):
+        seen.append(url)
+        return Resp()
+
+    monkeypatch.setattr(cli.requests, "get", fake_get)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["cli", "--api-key", "k", "--health", "--mutations", str(value)],
+    )
+    out = io.StringIO()
+    with redirect_stdout(out):
+        rc = cli.main()
+    assert rc == 0, out.getvalue()
+    assert seen, "the health request should still have been made"
+    assert "must be between 0 and" not in out.getvalue(), out.getvalue()
+
+
 @pytest.mark.parametrize("value", ["-1", "-10"])
 def test_argparse_path_rejects_negative(value, monkeypatch):
     """--mutations below zero exits non-zero without making a request.
