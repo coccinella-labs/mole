@@ -103,8 +103,15 @@ Facilitates the creation of molecular variants through random mutations.
 
 **Parameters:**
 - `base_smiles`: SMILES representation (required)
-- `num_mutations`: Mutation count (optional, default: 3)
+- `num_mutations`: Mutation count (optional, default: 3, maximum: 10)
 - `mutation_types`: Permitted mutation categories (optional)
+
+`num_mutations` outside the range 0 to 10 is rejected with `400`. The upper
+bound is a request-level limit, not a preference: each mutation searches up to
+32 candidate positions, so the work a single request performs grows with the
+count, and the endpoint is declared `async`, so that work blocks the event loop
+for its duration. The maximum of 10 matches the ceiling the frontend already
+enforces on this input.
 
 **Response Structure:**
 ```json
@@ -118,9 +125,35 @@ Facilitates the creation of molecular variants through random mutations.
     "H-Bond Donors": 1,
     "H-Bond Acceptors": 3,
     "Topological Polar Surface Area": 63.6
-  }
+  },
+  "requested_mutations": 3,
+  "successful_mutations": 3,
+  "failed_mutations": 0,
+  "mutated": true
 }
 ```
+
+**Mutation Counters:**
+
+`requested_mutations`, `successful_mutations` and `failed_mutations` count
+logical mutations, not candidate attempts. One requested mutation examines
+several candidate positions and accepts the first that both passes RDKit
+sanitisation and makes the structural change that mutation type promises, so
+`successful_mutations + failed_mutations == requested_mutations` always holds
+for a completed request.
+
+A mutation counts as successful only if it really changed the structure. A
+candidate that sanitises but leaves the molecule unchanged does **not** count
+as successful, because RDKit re-perceives aromaticity during sanitisation and
+can silently undo a bond order edit inside an aromatic ring. Such a candidate
+is counted in `failed_mutations` instead.
+
+`mutated` is `true` when at least one mutation changed the structure; when it
+is `false`, no mutation was applied and the returned molecule has the same
+structure as the input. `generated_smiles` is canonicalised, so its string
+representation may differ from `original_smiles` even in that case. The
+response still returns `200` in every completed case: the counters, not the
+status code, distinguish real work from a no-op.
 
 **Available Mutations:**
 - `substituent`: Introduces substituent groups
