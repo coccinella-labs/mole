@@ -75,26 +75,3 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64
-
-    - name: Extract metadata for celery
-      id: meta-celery
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository }}/celery
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,format=short
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: Build and push celery image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend
-        file: ./backend/Dockerfile.celery
-        push: true
-        tags: ${{ steps.meta-celery.outputs.tags }}
-        labels: ${{ steps.meta-celery.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        platforms: linux/amd64

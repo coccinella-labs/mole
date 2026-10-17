@@ -14,9 +14,10 @@ cp .env.example .env
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:password@database/mol_platform` |
-| `CELERY_BROKER_URL` | Redis URL for Celery broker | `redis://redis:6379/0` |
-| `CELERY_RESULT_BACKEND` | Redis URL for Celery results | `redis://redis:6379/0` |
+| `API_KEY` | Bearer token required by every endpoint | `your-secret-api-key` |
+
+PostgreSQL and Redis were removed along with the unused Celery stack; there is
+no database or broker behind this service. See issue #101.
 
 ### Frontend Variables
 

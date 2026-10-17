@@ -14,8 +14,6 @@ dependencies = [
      "rdkit==2026.9.1",
     "numpy",
     "Pillow",
-    "celery==5.6.3",
-    "redis==8.1.0",
     "passlib==1.7.4",
     "python-multipart==0.0.32",
     "email-validator==2.3.0",
