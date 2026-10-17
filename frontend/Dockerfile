@@ -4,10 +4,10 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 # Set build args as env vars
-ARG REACT_APP_BACKEND_URL
-ARG REACT_APP_API_KEY
-ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
-ENV REACT_APP_API_KEY=$REACT_APP_API_KEY
+ARG VITE_BACKEND_URL
+ARG VITE_API_KEY
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+ENV VITE_API_KEY=$VITE_API_KEY
 
 # Install dependencies
 COPY package.json package-lock.json ./
@@ -17,12 +17,12 @@ RUN npm ci
 COPY . .
 
 # Build the app
-RUN npx react-scripts build
+RUN npx vite build
 
 FROM nginx:alpine
 
 # Copy built app to nginx
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80
