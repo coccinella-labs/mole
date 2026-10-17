@@ -1,6 +1,6 @@
 # Quick Start
 
-Get mol-platform up and running quickly with Docker.
+Get Mole up and running quickly with Docker.
 
 ## Docker Deployment (Recommended)
 

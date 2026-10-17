@@ -1,6 +1,6 @@
 # API Authentication
 
-mol-platform uses API key authentication to secure access to all endpoints.
+Mole uses API key authentication to secure access to all endpoints.
 
 ## Setup
 

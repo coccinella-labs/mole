@@ -1,6 +1,6 @@
-# Contributing to mol-platform
+# Contributing to Mole
 
-Thank you for your interest in contributing to mol-platform! We welcome contributions from the community.
+Thank you for your interest in contributing to Mole! We welcome contributions from the community.
 
 ## Development Setup
 

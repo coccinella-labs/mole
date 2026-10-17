@@ -1,4 +1,4 @@
-site_name: mol-platform
+site_name: Mole
 site_description: Containerized microservice for molecular generation and analysis with RDKit
 site_author: coccinella-labs
 site_url: https://coccinella-labs.github.io/molplatform

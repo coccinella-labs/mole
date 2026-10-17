@@ -1,7 +1,7 @@
-describe('mol-platform e2e', () => {
+describe('Mole e2e', () => {
   it('loads the app and displays the title', () => {
     cy.visit('/')
-    cy.contains('mol-platform').should('be.visible')
+    cy.contains('Mole').should('be.visible')
   })
 
   it('generates a molecule', () => {

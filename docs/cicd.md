@@ -1,6 +1,6 @@
 # CI/CD
 
-Continuous Integration and Deployment pipeline for mol-platform.
+Continuous Integration and Deployment pipeline for Mole.
 
 ## GitHub Actions Workflows
 
@@ -52,14 +52,14 @@ Triggered by a tag matching `v*`. Builds a single-file CLI binary and attaches
 it to a GitHub release.
 
 - `pip install pyinstaller`, then
-  `pyinstaller --onefile src/cli.py --name mol-platform-${{ matrix.target }}`
+  `pyinstaller --onefile src/cli.py --name mole-${{ matrix.target }}`
 - Runs on a per-OS matrix. Assets are named per target, so they do not collide:
 
   | Runner | Asset |
   |---|---|
-  | `ubuntu-latest` | `mol-platform-linux` |
-  | `macos-latest` | `mol-platform-macos` |
-  | `windows-latest` | `mol-platform-windows.exe` |
+  | `ubuntu-latest` | `mole-linux` |
+  | `macos-latest` | `mole-macos` |
+  | `windows-latest` | `mole-windows.exe` |
 
 - Attached via `softprops/action-gh-release`, with generated release notes
 
@@ -67,19 +67,28 @@ This is the fastest way to get the CLI, since it skips building a wheel and
 needs no Python environment:
 
 ```
-curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mol-platform-macos
-chmod +x mol-platform-macos
-./mol-platform-macos --api-key your-key --health
+curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mole-macos
+chmod +x mole-macos
+./mole-macos --api-key your-key --health
 ```
 
-Substitute `mol-platform-linux` or `mol-platform-windows.exe` for the other
+Substitute `mole-linux` or `mole-windows.exe` for the other
 platforms.
 
-**Note on `v1.0.0`.** That release predates the per-target rename, so it only
-contains `mol-platform` and `mol-platform.exe`. Because both the Linux and
-macOS jobs uploaded a file called `mol-platform`, they overwrote each other and
-the surviving asset is the Linux build. Verified: downloading it on macOS gives
-`exec format error`. There is currently no macOS binary for `v1.0.0`.
+**Note on `v1.0.0`.** That release predates both the per-target rename and the
+product rename, so it only contains `mol-platform` and `mol-platform.exe`.
+Because both the Linux and macOS jobs uploaded a file called `mol-platform`,
+they overwrote each other and the surviving asset is the Linux build. Verified:
+downloading it on macOS gives `exec format error`. There is currently no macOS
+binary for `v1.0.0`.
+
+**Asset names changed at v1.1.0.** Assets published before that tag are named
+`mol-platform-<target>`; assets from v1.1.0 onwards are named `mole-<target>`.
+Existing assets are not renamed or moved, so a download link pinned to an older
+tag must keep the old name. The `releases/latest/download/...` links above only
+resolve to the new names once a v1.1.0-or-later release exists; until then they
+404, and `.../download/mol-platform-macos` still resolves to the v1.0.0 asset,
+which is a Linux build and will not run on macOS.
 
 ### E2E Workflow (.github/workflows/e2e.yml)
 

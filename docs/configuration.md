@@ -1,6 +1,6 @@
 # Configuration
 
-Configure mol-platform using environment variables.
+Configure Mole using environment variables.
 
 ## Environment Variables
 

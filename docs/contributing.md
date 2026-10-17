@@ -1,6 +1,6 @@
 # Contributing
 
-We welcome contributions to mol-platform! Please follow these guidelines.
+We welcome contributions to Mole! Please follow these guidelines.
 
 ## Development Setup
 
