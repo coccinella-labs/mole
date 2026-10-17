@@ -67,28 +67,27 @@ This is the fastest way to get the CLI, since it skips building a wheel and
 needs no Python environment:
 
 ```
-curl -LO https://github.com/coccinella-labs/molplatform/releases/latest/download/mole-macos
-chmod +x mole-macos
-./mole-macos --api-key your-key --health
+curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.0.0/mol-platform
+chmod +x mol-platform
+./mol-platform --api-key your-key --health
 ```
 
-Substitute `mole-linux` or `mole-windows.exe` for the other
-platforms.
+`v1.0.0` is the only release so far. It publishes a single un-suffixed
+`mol-platform`, plus `mol-platform.exe`, and the surviving binary is a Linux
+build. From `v1.1.0` the per-target names `mole-linux`, `mole-macos` and
+`mole-windows.exe` apply instead.
 
 **Note on `v1.0.0`.** That release predates both the per-target rename and the
-product rename, so it only contains `mol-platform` and `mol-platform.exe`.
-Because both the Linux and macOS jobs uploaded a file called `mol-platform`,
-they overwrote each other and the surviving asset is the Linux build. Verified:
-downloading it on macOS gives `exec format error`. There is currently no macOS
-binary for `v1.0.0`.
+product rename. Because both the Linux and macOS jobs uploaded a file called
+`mol-platform`, they overwrote each other and the surviving asset is the Linux
+build. Verified: downloading it on macOS gives `exec format error`. There is
+currently no macOS binary for `v1.0.0`.
 
-**Asset names changed at v1.1.0.** Assets published before that tag are named
-`mol-platform-<target>`; assets from v1.1.0 onwards are named `mole-<target>`.
-Existing assets are not renamed or moved, so a download link pinned to an older
-tag must keep the old name. The `releases/latest/download/...` links above only
-resolve to the new names once a v1.1.0-or-later release exists; until then they
-404, and `.../download/mol-platform-macos` still resolves to the v1.0.0 asset,
-which is a Linux build and will not run on macOS.
+**Asset names change at `v1.1.0`.** Assets up to and including `v1.0.0` are
+named `mol-platform` and `mol-platform.exe`; assets from `v1.1.0` onwards are
+named `mole-<target>`. Existing assets are not renamed or moved, so a link
+pinned to an older tag must keep the old name, and
+`releases/latest/download/mole-*` does not resolve until `v1.1.0` is published.
 
 ### E2E Workflow (.github/workflows/e2e.yml)
 

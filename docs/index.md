@@ -15,8 +15,8 @@ A **containerized microservice application** for molecular generation and analys
 
 ```bash
 # Clone the repository
-git clone https://github.com/coccinella-labs/molplatform.git
-cd mol-platform
+git clone https://github.com/coccinella-labs/mole.git
+cd mole
 
 # Start with Docker
 docker-compose up --build
