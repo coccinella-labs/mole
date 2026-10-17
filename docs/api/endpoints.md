@@ -33,8 +33,18 @@ Generates a new molecule by applying random mutations to a base molecule.
 
 **Parameters:**
 - `base_smiles` (string, required): SMILES string of the base molecule
-- `num_mutations` (integer, optional): Number of mutations to apply (default: 3)
+- `num_mutations` (integer, optional): Number of mutations to apply (default: 3, range: 0 to 10)
 - `mutation_types` (array, optional): Types of mutations to apply
+
+**`num_mutations` accepts 0 to 10.** A value outside that range is rejected with
+`400`, not `422`: both bounds fail for the same reason, and the lower bound
+already had a tested `400` contract. The upper bound is a request-level limit on
+total work, not a preference. Each mutation searches up to 32 candidate
+positions, so total work grows with the requested count, and because the endpoint
+is declared `async` that CPU-bound work blocks the event loop for its full
+duration. At 10 the request takes about 20 ms at p95; at 400 it takes about
+820 ms. The maximum matches the ceiling the frontend already enforces on this
+input.
 
 **Response:**
 ```json

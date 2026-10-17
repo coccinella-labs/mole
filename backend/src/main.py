@@ -34,6 +34,21 @@ app.add_middleware(
 )
 
 
+# Request-level bound on total mutation work.
+#
+# MAX_MUTATION_CANDIDATES bounds the candidate search within one logical
+# mutation, but says nothing about how many mutations a request may ask for, so
+# total work was previously unbounded: cost scales linearly with num_mutations
+# and the endpoint is async, so a large value occupies the event loop for its
+# whole duration. Measured on aspirin including image rendering: 14 ms at 10
+# mutations, 110 ms at 100, 782 ms at 400.
+#
+# The ceiling is taken from the existing product contract rather than chosen
+# arbitrarily: the frontend already constrains this input with max="10". See
+# issue #95 for the measurements and the reasoning.
+MAX_MUTATIONS_PER_REQUEST = 10
+
+
 class MoleculeGenerationRequest(BaseModel):
     base_smiles: str
     num_mutations: int = 3
@@ -354,6 +369,20 @@ async def generate_molecule(request: MoleculeGenerationRequest):
     if request.num_mutations < 0:
         raise HTTPException(
             status_code=400, detail="num_mutations must be non-negative"
+        )
+    if request.num_mutations > MAX_MUTATIONS_PER_REQUEST:
+        # Rejected with 400 rather than by a pydantic bound. A Field(le=...)
+        # constraint would return 422 for this and for the negative case above,
+        # which would change the documented and tested lower-bound behaviour.
+        # Both bounds are invalid input for the same reason, so they fail alike.
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"num_mutations must not exceed {MAX_MUTATIONS_PER_REQUEST}; "
+                "each mutation searches up to "
+                f"{MAX_MUTATION_CANDIDATES} candidate positions, so the "
+                "per-request cost grows with the requested count"
+            ),
         )
 
     try:

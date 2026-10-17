@@ -103,8 +103,15 @@ Facilitates the creation of molecular variants through random mutations.
 
 **Parameters:**
 - `base_smiles`: SMILES representation (required)
-- `num_mutations`: Mutation count (optional, default: 3)
+- `num_mutations`: Mutation count (optional, default: 3, maximum: 10)
 - `mutation_types`: Permitted mutation categories (optional)
+
+`num_mutations` outside the range 0 to 10 is rejected with `400`. The upper
+bound is a request-level limit, not a preference: each mutation searches up to
+32 candidate positions, so the work a single request performs grows with the
+count, and the endpoint is declared `async`, so that work blocks the event loop
+for its duration. The maximum of 10 matches the ceiling the frontend already
+enforces on this input.
 
 **Response Structure:**
 ```json
