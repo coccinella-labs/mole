@@ -27,6 +27,26 @@ We welcome contributions to mol-platform! Please follow these guidelines.
 2. Ensure CI passes
 3. Fill out the PR template completely
 4. Request review from maintainers
+5. Merge through the merge queue
+
+### Merging
+
+Merges go through the repository merge queue, configured on `main` by the
+`main-merge-queue` ruleset with a squash strategy. Do not merge directly and do
+not use `--admin`; both are blocked by the ruleset, and there are no configured
+bypass actors.
+
+**Finalise the PR title and description before the PR enters the queue.** The
+queue snapshots the title and description into the squash commit message when it
+builds the merge commit. Corrections made after that point land on the PR but
+not in the commit on `main`, so the history can disagree with the PR.
+
+Before enqueuing, re-check every factual claim in the description against the
+final state of the branch, in particular:
+
+- the test counts and check names, which drift as tests are added
+- the file count and the list of commits
+- any statement that a finding is still open once it has been fixed
 
 ## Commit Convention
 
