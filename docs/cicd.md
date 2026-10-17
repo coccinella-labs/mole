@@ -11,7 +11,7 @@ Runs on pushes and PRs to main:
 1. **Setup Environment**
    - Python 3.12, 3.13 and 3.14, as a matrix, so every backend step runs three times
    - Postgres 15 and Redis as service containers
-   - Node.js 18
+   - Node.js 22, matching `frontend/Dockerfile` and `e2e.yml`. Cypress 16 requires Node 22 or newer.
 
 2. **Backend Testing**
    - Install dependencies from `backend/requirements.txt`
