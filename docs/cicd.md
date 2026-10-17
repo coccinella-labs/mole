@@ -10,7 +10,6 @@ Runs on pushes and PRs to main:
 
 1. **Setup Environment**
    - Python 3.12, 3.13 and 3.14, as a matrix, so every backend step runs three times
-   - Postgres 15 and Redis as service containers
    - Node.js 22, matching `frontend/Dockerfile` and `e2e.yml`. Cypress 16 requires Node 22 or newer.
 
 2. **Backend Testing**
@@ -35,7 +34,7 @@ Runs on pushes and PRs to main:
 Builds and pushes Docker images to GitHub Container Registry:
 
 - Triggered on pushes and PRs
-- Builds backend, frontend, and celery images
+- Builds backend and frontend images
 - Pushes to `ghcr.io`
 
 ### Docs Workflow (.github/workflows/docs.yml)

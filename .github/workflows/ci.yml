@@ -22,21 +22,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.12', '3.13', '3.14']
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: mol_platform
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:alpine
-
     steps:
     - uses: actions/checkout@v4
 

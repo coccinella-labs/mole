@@ -22,20 +22,20 @@ A containerized microservice for molecular generation and analysis. Generates mo
 | `backend` | FastAPI service, serves `/docs` and `/generate_molecule` | 8000 |
 | `frontend` | web interface | 3000 |
 | `nginx` | reverse proxy over `backend` and `frontend` | 80 |
-| `database` | Postgres 15, image `postgres:15-alpine` | none, internal only |
-| `redis` | broker for the Celery worker | 6379 |
-| `celery_worker` | Celery app, present for planned async work | none |
 
-`postgres_data` and `node_modules` are named volumes, not services.
+`node_modules` is a named volume, not a service.
 
 Generation is handled inline in the request: `/generate_molecule` calls
-`MoleculeGenerator` directly and does not enqueue to Celery. `config.py` labels
-the Celery settings as being for future async processing, so Redis and the
-worker are wired up but not yet on the request path.
+`MoleculeGenerator` directly, synchronously.
 
-`DATABASE_URL` is injected into both `backend` and `celery_worker` by
-`docker-compose.yml` and is documented in `docs/configuration.md`, though no
-module under `backend/src` reads it yet.
+The stack previously carried Postgres, Redis and a Celery worker. None were on
+the request path, and no module under `backend/src` read `DATABASE_URL` or the
+Celery settings. `src/tasks.py` held a second copy of the mutation code that
+predated the fixes in PR #94, and the worker never imported it, so it registered
+only Celery built-ins. Running that copy directly produced results RDKit could
+not parse in 156 of 300 runs, and silently returned the input unchanged in 29.
+Registering those tasks would have exposed a second, less reliable mutation
+path, so the stack was removed rather than wired up. See issue #101.
 
 ---
 

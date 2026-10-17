@@ -7,9 +7,6 @@ services:
       - "8000:8000"
     environment:
       - API_KEY=${API_KEY}
-      - DATABASE_URL=postgresql://user:password@database/mol_platform
-    depends_on:
-      - database
     volumes:
       - ./backend:/app
 
@@ -31,32 +28,6 @@ services:
       - REACT_APP_BACKEND_URL=http://localhost:8000
       - REACT_APP_API_KEY=${API_KEY}
 
-  database:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=mol_platform
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-
-  celery_worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.celery
-    environment:
-      - DATABASE_URL=postgresql://user:password@database/mol_platform
-    depends_on:
-      - database
-      - redis
-    volumes:
-      - ./backend:/app:rw
-
   nginx:
     image: nginx:alpine
     ports:
@@ -68,5 +39,4 @@ services:
       - frontend
 
 volumes:
-  postgres_data:
   node_modules:
