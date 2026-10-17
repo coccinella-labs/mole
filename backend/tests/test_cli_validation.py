@@ -52,6 +52,11 @@ def run_interactive(script: str) -> str:
         with redirect_stdout(out):
             cli.interactive_mode("http://127.0.0.1:1", "key")
     except EOFError:
+        # Expected once the script runs out. interactive_mode treats EOF as
+        # end of input and returns, so reaching here just means the loop ended
+        # rather than being quit explicitly. Swallowing it lets the caller read
+        # whatever the loop printed up to that point, which is the whole point
+        # of capturing output instead of asserting on a return value.
         pass
     finally:
         builtins.input = original
