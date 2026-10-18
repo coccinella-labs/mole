@@ -81,8 +81,11 @@ curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.0.0/mol-pl
 chmod +x mol-platform
 ```
 
-That is the current `v1.0.0` asset, which predates the per-target naming, so it
-is a Linux build with no macOS or Windows equivalent. See `docs/cicd.md`.
+That is the `v1.0.0` Linux asset, which predates the per-target naming. The same
+release also publishes `mol-platform.exe`, a Windows build, at the same tag. There
+is no macOS build at `v1.0.0`: the Linux and macOS jobs both uploaded a file
+named `mol-platform`, so one overwrote the other and the surviving asset is the
+Linux build. See `docs/cicd.md`.
 
 Asset names change at `v1.1.0`. That release will publish `mole-linux`,
 `mole-macos` and `mole-windows.exe`. Existing assets are not renamed or moved, so
