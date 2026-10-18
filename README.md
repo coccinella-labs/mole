@@ -77,24 +77,33 @@ prebuilt binary attached to each tagged release, which needs no Python at all:
 
 ```bash
 # Linux
-curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.0.0/mol-platform
-chmod +x mol-platform
+curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mole-linux
+chmod +x mole-linux
+
+# macOS
+curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mole-macos
+chmod +x mole-macos
+
+# Windows (PowerShell)
+curl.exe -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mole-windows.exe
 ```
 
-That is the current `v1.0.0` asset, which predates the per-target naming, so it
-is a Linux build with no macOS or Windows equivalent. See `docs/cicd.md`.
+Every release from `v1.1.0` onwards publishes one asset per target, named
+`mole-<target>`, with `.exe` appended on Windows. Earlier releases used
+different names, and those assets keep them. See [docs/cicd.md](docs/cicd.md).
 
-Asset names change at `v1.1.0`. That release will publish `mole-linux`,
-`mole-macos` and `mole-windows.exe`. Existing assets are not renamed or moved, so
-links pinned to an existing tag keep their current names, and
-`releases/latest/download/mole-*` does not resolve until `v1.1.0` exists.
+Assets are never renamed or moved, so a URL pinned to any tag keeps
+resolving to the file that tag actually published.
+`releases/latest/download/mole-linux` tracks the newest release, so it
+changes target whenever a new release lands. Pin the tag if you want a
+build that does not move under you.
 
 To build and install it from source instead:
 
 ```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate && pip install build && python -m build
-pipx install dist/mol_platform-1.0.0-py3-none-any.whl
+pipx install dist/mol_platform-*-py3-none-any.whl
 
 # Test health
 mol-platform --api-key your-key --health
@@ -200,6 +209,6 @@ Provides service status confirmation.
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0"
+  "version": "1.1.0"
 }
 ```
