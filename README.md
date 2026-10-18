@@ -90,7 +90,7 @@ curl.exe -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mo
 
 Every release from `v1.1.0` onwards publishes one asset per target, named
 `mole-<target>`, with `.exe` appended on Windows. Earlier releases used
-different names, and those assets keep them. See `docs/cicd.md`.
+different names, and those assets keep them. See [docs/cicd.md](docs/cicd.md).
 
 Assets are never renamed or moved, so a URL pinned to any tag keeps
 resolving to the file that tag actually published.
