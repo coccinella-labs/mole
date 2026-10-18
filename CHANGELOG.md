@@ -11,9 +11,10 @@ Work merged after `v1.1.0` and not yet cut into a release.
 
 ## [1.1.0] - 2026-10-18
 
-Work merged after `v1.0.0` and not yet cut into a release. The version number is
-not chosen: `backend/pyproject.toml` is the single source of truth for the
-backend version, so `main.py` no longer needs editing when a release is cut.
+Released on 2026-10-18, published with one artifact per target: `mole-linux`,
+`mole-macos` and `mole-windows.exe`. `backend/pyproject.toml` is the single source
+of truth for the version, so `main.py` no longer needs editing when a release is
+cut.
 
 ### Added
 
@@ -69,6 +70,15 @@ backend version, so `main.py` no longer needs editing when a release is cut.
 - Release artifacts are named per target at `v1.1.0`; assets up to and
   including `v1.0.0` keep their existing names.
 - e2e tests run on pull requests and in the merge queue, on Node 22.
+
+Two changes affect the repository rather than the application:
+
+- A pre-commit hook fails when `CHANGELOG.md` and `docs/changelog.md` differ. The
+  two had already drifted by four entries, so the changelog published on the docs
+  site was missing part of what `v1.0.0` shipped.
+- A `promote-changelog` workflow rewrites the `Unreleased` heading to a dated
+  version heading and opens a pull request when a version tag is pushed, so the
+  changelog no longer has to be edited by hand at release time.
 
 ### Removed
 
