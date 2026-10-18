@@ -16,3 +16,17 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
       - id: mixed-line-ending
+
+  # The repo carries the same changelog twice: CHANGELOG.md at the root, and
+  # docs/changelog.md, which is the copy mkdocs.yml publishes to the docs site.
+  # They had already drifted, with four entries present in one and missing from
+  # the published one. This fails when they differ, so the two cannot rot apart
+  # again. Copy the root file over docs/changelog.md to fix.
+  - repo: local
+    hooks:
+      - id: changelog-copies-match
+        name: CHANGELOG.md and docs/changelog.md must match
+        entry: diff -u CHANGELOG.md docs/changelog.md
+        language: system
+        pass_filenames: false
+        files: ^(CHANGELOG\.md|docs/changelog\.md)$
