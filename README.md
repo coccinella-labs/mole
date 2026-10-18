@@ -88,13 +88,15 @@ chmod +x mole-macos
 curl.exe -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mole-windows.exe
 ```
 
-Every release publishes one asset per target, named `mole-<target>`, with `.exe`
-appended on Windows. See `docs/cicd.md`.
+Every release from `v1.1.0` onwards publishes one asset per target, named
+`mole-<target>`, with `.exe` appended on Windows. Earlier releases used
+different names, and those assets keep them. See `docs/cicd.md`.
 
-Assets are never renamed or moved, so a URL pinned to an older tag keeps working
-after newer releases ship. `releases/latest/download/mole-linux` tracks the newest
-release, so it changes target whenever a new release lands. Pin the tag if you
-want a build that does not move under you.
+Assets are never renamed or moved, so a URL pinned to any tag keeps
+resolving to the file that tag actually published.
+`releases/latest/download/mole-linux` tracks the newest release, so it
+changes target whenever a new release lands. Pin the tag if you want a
+build that does not move under you.
 
 To build and install it from source instead:
 

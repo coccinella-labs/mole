@@ -71,11 +71,13 @@ chmod +x mole-linux
 ./mole-linux --api-key your-key --health
 ```
 
-**Asset names are per-target.** Every release publishes `mole-linux`,
-`mole-macos` and `mole-windows.exe`. Assets are never renamed or moved, so a URL
-pinned to an older tag keeps its original name. `releases/latest/download/mole-*`
-resolves to the newest release, so it changes target whenever a new release
-lands; pin the tag for a build that does not move.
+**Asset names are per-target.** Every release from `v1.1.0` onwards publishes
+`mole-linux`, `mole-macos` and `mole-windows.exe`. Earlier releases used
+different names, and those assets keep them: a URL pinned to any tag keeps
+resolving to the file that tag actually published.
+`releases/latest/download/mole-*` resolves to the newest release, so it
+changes target whenever a new release lands; pin the tag for a build that does
+not move.
 
 ### E2E Workflow (.github/workflows/e2e.yml)
 
