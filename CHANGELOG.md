@@ -91,43 +91,54 @@ backend version, so `main.py` no longer needs editing when a release is cut.
 
 ## [1.0.0] - 2025-12-28
 
-### Released
-- Official 1.0.0 release with all improvements
+The first tagged release. Entries below describe what shipped in 1.0.0 and are
+written against that tag; later changes are in [Unreleased](#unreleased) above.
 
 ### Added
-- Initial release of Mole: containerized microservice for molecular simulation
-- Molecule generation with random mutations (substituents, bond orders, atom swaps)
-- REST API with FastAPI backend
-- React frontend with visualization
-- Docker Compose setup with PostgreSQL, Redis, Celery
-- Comprehensive testing (unit + e2e)
-- Ruff linting and pre-commit hooks
-- Input validation and error handling
-- LRU caching for performance
-- Environment configuration with .env.example
-- Complete documentation
-- CLI packaged as standalone binary with `mol-platform` command
-- API key authentication for all endpoints
-- Documentation for API authentication setup
-- Workflow updates to use API_KEY secret
+
+- **Molecule generation.** `POST /generate_molecule` produces variants of a
+  supplied SMILES string through random mutations of three types:
+  `substituent`, `bond_order` and `atom_swap`. `mutation_types` optionally
+  restricts which are used.
+- **A FastAPI service** exposing `/generate_molecule`, `/health` and `/docs`,
+  with `/health` reporting service status and version.
+- **A React web interface** that submits a SMILES string, shows the generated
+  molecule as a rendered image, and reports the mutation counters and molecular
+  properties. Built with Create React App and Tailwind CSS.
+- **API key authentication** on every endpoint, via a bearer token.
+- **A CLI**, packaged as a standalone binary and installed under the
+  `mol-platform` command, for generating without the web interface.
+- **A Docker Compose stack** with the FastAPI backend, the frontend, an nginx
+  reverse proxy in front of both, and PostgreSQL and Redis.
+- **A Celery worker** and the `src/tasks.py` module it loaded.
+- **Tests**: backend unit tests for molecule generation, backend e2e tests, and
+  a Cypress frontend suite.
+- **Linting and hooks**: Ruff for Python, with pre-commit configured in the
+  repository.
+- **Documentation** published through MkDocs Material, covering installation,
+  configuration, the CLI, the API, testing and CI/CD.
+- **Environment configuration** via `.env.example`, and workflows updated to
+  read the `API_KEY` secret.
 
 ### Fixed
-- Corrected SMILES string manipulation with proper RDKit molecular editing
-- Added sanitization to prevent invalid molecules
-- Replaced numpy random with built-in random for simplicity
-- Fixed Docker dependencies and PYTHONPATH
-- Resolved npm vulnerabilities
-- Improved API health endpoint with version info
-- Added comprehensive input validation
+
+- SMILES string manipulation was corrected to perform proper RDKit molecular
+  editing rather than string substitution.
+- Sanitisation was added so generated molecules are valid.
+- `numpy.random` was replaced with the standard library `random`, dropping a
+  dependency that was not needed.
+- Docker dependencies and `PYTHONPATH` were corrected so the image builds.
+- npm vulnerabilities were resolved.
+- Input validation was added across the request boundary.
 
 ### Changed
-- Stabilized Python version to 3.12 across all environments
-- Updated dependencies for compatibility
-- Enhanced error messages and logging
 
-### Technical Improvements
-- Type-safe random selections
-- Modular mutation strategies
-- Clean code with linting
-- CI/CD pipeline with automated testing
-- Production-ready containerization
+- Python was pinned to 3.12 across all environments.
+- Dependencies were updated for compatibility.
+- Error messages and logging were made more informative.
+
+### Technical
+
+- Type-safe random selection, and mutation logic organised into per-type
+  strategies rather than one branching function.
+- CI/CD running automated tests, with production containerisation.
