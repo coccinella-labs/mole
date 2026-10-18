@@ -76,6 +76,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
           VERSION: ${{ steps.tag.outputs.version }}
+          BRANCH: changelog/promote-${{ steps.tag.outputs.version }}
         run: |
           {
             echo "Promotes the changelog for \`$TAG\`."
@@ -84,12 +85,28 @@ jobs:
             echo
             echo "Opened automatically by \`.github/workflows/promote-changelog.yml\`."
           } > pr-body.md
+
+          # The script edits the working tree, and checkout leaves a detached
+          # HEAD, so the change has to be committed onto a branch and pushed
+          # before gh pr create has anything to open a pull request from.
+          # Without this the command reports "head branch main is the same as
+          # base branch main" and no pull request appears.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add CHANGELOG.md docs/changelog.md
+          git commit -m "Promote changelog: Unreleased to $VERSION"
+          git push --force origin "$BRANCH"
+
+          # Deliberately not guarded with ||. A silent no-op here is how the
+          # first release lost its promotion pull request while the job
+          # still reported success.
           gh pr create \
+            --head "$BRANCH" \
             --base "${{ github.event.repository.default_branch }}" \
             --title "Promote changelog: Unreleased to $VERSION" \
             --body-file pr-body.md \
-            --label documentation \
-            || echo "::notice::No pull request opened. Close any existing one for this tag."
+            --label documentation
 
       - name: Confirm the two changelog copies still match
         run: |
