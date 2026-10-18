@@ -19,12 +19,12 @@ Runs on pushes and PRs to main:
 
 3. **Frontend Testing**
    - Install dependencies with `npm ci`
-   - Run `react-scripts test --watchAll=false --passWithNoTests`
+   - There is no frontend unit-test step. The repository has no JavaScript unit
+     tests; `frontend/cypress/e2e/` is the frontend test suite and runs in the
+     separate `e2e` workflow described below.
 
-   There is no separate lint step in any workflow. Create React App runs ESLint
-   as part of `react-scripts build`, which happens in `docker.yml`, not here.
-   Because `docker build` does not inherit the runner environment, `CI` is not
-   set inside that build, so ESLint warnings do not fail the build.
+   There is no separate lint step in any workflow. The `pre-commit` hook runs
+   across the repository and is what enforces formatting.
 
 4. **Build Check**
    - `docker-compose build`
