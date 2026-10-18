@@ -21,9 +21,15 @@ no database or broker behind this service. See issue [#101](https://github.com/c
 
 ### Frontend Variables
 
+Frontend variables use the `VITE_` prefix. Vite inlines any variable with that
+prefix into the client bundle at build time, so these are build arguments rather
+than runtime settings; see the Vite migration in
+[#110](https://github.com/coccinella-labs/mole/pull/110).
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `REACT_APP_BACKEND_URL` | Backend API URL | `http://localhost:8000` |
+| `VITE_BACKEND_URL` | Backend API URL | `http://localhost:8000` |
+| `VITE_API_KEY` | Bearer token sent by the frontend | none |
 
 ## Docker Configuration
 
@@ -34,7 +40,7 @@ When using Docker Compose, environment variables are set in the `docker-compose.
 For local development without Docker:
 
 1. **Backend:** Set environment variables or create `.env` file in `backend/` directory
-2. **Frontend:** Set `REACT_APP_BACKEND_URL` in `frontend/.env` or environment
+2. **Frontend:** Set `VITE_BACKEND_URL` and `VITE_API_KEY` in `frontend/.env` or the environment. Only the `VITE_` prefix is exposed to the bundle; other variables are not readable from client code.
 
 ## Security Notes
 

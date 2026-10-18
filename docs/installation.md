@@ -43,8 +43,13 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python src/main.py  # Starts on http://localhost:8000
+python -m src.main  # Starts on http://localhost:8000
 ```
+
+`python -m src.main` is the working form. `src/main.py` uses relative imports
+(`from .config import settings`), so running the file directly with
+`python src/main.py` fails with `ImportError: attempted relative import with no
+known parent package`.
 
 ##### API Key Setup
 
