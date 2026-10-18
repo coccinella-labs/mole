@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/specificati
 
 ## [Unreleased]
 
+Work merged after `v1.1.0` and not yet cut into a release.
+
+## [1.1.0] - 2026-10-18
+
 Work merged after `v1.0.0` and not yet cut into a release. The version number is
 not chosen: `backend/pyproject.toml` is the single source of truth for the
 backend version, so `main.py` no longer needs editing when a release is cut.
