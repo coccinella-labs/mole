@@ -12,6 +12,7 @@ from rdkit import Chem, rdBase
 from rdkit.Chem import Descriptors, Draw
 
 from .config import settings
+from .version import resolve_version
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="mol-platform",
     description="Containerized microservice for molecular generation and mutation analysis",
-    version="1.0.0",
+    version=resolve_version(),
 )
 
 security = HTTPBearer()
