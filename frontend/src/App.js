@@ -7,6 +7,12 @@ import 'react-toastify/dist/ReactToastify.css';
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 const apiKey = process.env.REACT_APP_API_KEY;
 
+// Mirrors MAX_MUTATIONS_PER_REQUEST in backend/src/main.py, which answers a
+// larger request with a 400. The API accepts 0 through this value: zero is a
+// legitimate request that returns the input unchanged, so the lower bound here
+// is 0 rather than 1.
+const MAX_MUTATIONS = 10;
+
 axios.defaults.baseURL = backendUrl;
 if (apiKey) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
@@ -29,6 +35,18 @@ function describeError(error) {
     if (typeof detail === 'string' && detail) {
       return detail;
     }
+    // FastAPI answers a request-schema violation with 422 and a list of error
+    // objects rather than a sentence, so the string check above is false and
+    // the reason was being replaced by the bare status code. Read the msg
+    // fields so the actual cause reaches the person.
+    if (Array.isArray(detail) && detail.length) {
+      const messages = detail
+        .map((item) => (item && typeof item.msg === 'string' ? item.msg : null))
+        .filter(Boolean);
+      if (messages.length) {
+        return messages.join('; ');
+      }
+    }
     return `request failed with status ${response.status}`;
   }
   return error.message || 'unexpected error';
@@ -36,9 +54,23 @@ function describeError(error) {
 
 function App() {
   const [baseMolecule, setBaseMolecule] = useState('');
-  const [numMutations, setNumMutations] = useState(3);
+  // Held as the raw string the user typed, not as a number. Clearing the field is
+  // an ordinary edit, and parseInt('') is NaN, which JSON.stringify writes as
+  // null and the API rejects with a 422. Keeping the string tells an empty edit
+  // apart from a deliberate 0, which parseInt(value) || 0 would not.
+  const [mutationsInput, setMutationsInput] = useState('3');
   const [generatedMolecule, setGeneratedMolecule] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const trimmedMutations = mutationsInput.trim();
+  const parsedMutations = Number(trimmedMutations);
+  // Only whole numbers inside the API's accepted range are sendable. Anything
+  // else, including an empty field, is caught here rather than becoming a 422.
+  const mutationsAreValid =
+    trimmedMutations !== '' &&
+    Number.isInteger(parsedMutations) &&
+    parsedMutations >= 0 &&
+    parsedMutations <= MAX_MUTATIONS;
 
   const handleGenerate = async () => {
     if (!baseMolecule) {
@@ -46,11 +78,18 @@ function App() {
       return;
     }
 
+    if (!mutationsAreValid) {
+      toast.error(
+        `Number of mutations must be a whole number between 0 and ${MAX_MUTATIONS}`
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await axios.post('/generate_molecule', {
         base_smiles: baseMolecule,
-        num_mutations: numMutations
+        num_mutations: parsedMutations
       });
 
       const {
@@ -95,8 +134,14 @@ function App() {
                 </h2>
 
                 <div className="flex flex-col">
-                  <label className="leading-loose">Base Molecule SMILES</label>
+                  {/* Tied to the input by id and htmlFor. As a sibling with no
+                      htmlFor the label labels nothing, and a placeholder is not
+                      a reliable accessible name. */}
+                  <label className="leading-loose" htmlFor="base-molecule-smiles">
+                    Base Molecule SMILES
+                  </label>
                   <input
+                    id="base-molecule-smiles"
                     type="text"
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     placeholder="Enter SMILES (e.g., CC(=O)OC1=CC=CC=C1C(=O)O)"
@@ -106,15 +151,23 @@ function App() {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="leading-loose">Number of Mutations</label>
+                  <label className="leading-loose" htmlFor="number-of-mutations">
+                    Number of Mutations
+                  </label>
                   <input
+                    id="number-of-mutations"
                     type="number"
-                    className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
-                    value={numMutations}
-                    onChange={(e) => setNumMutations(parseInt(e.target.value))}
-                    min="1"
-                    max="10"
+                    className="px-4 py-2 border focus:ring-gray-500 focus:ring-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                    value={mutationsInput}
+                    onChange={(e) => setMutationsInput(e.target.value)}
+                    min="0"
+                    max={MAX_MUTATIONS}
                   />
+                  {!mutationsAreValid && (
+                    <p className="text-sm text-red-600 mt-1">
+                      Enter a whole number between 0 and {MAX_MUTATIONS}.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-4">
