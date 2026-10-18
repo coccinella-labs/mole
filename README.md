@@ -15,7 +15,7 @@ A containerized microservice for molecular generation and analysis. Generates mo
 
 ## Components
 
-`docker-compose up` starts six services, not one:
+`docker-compose up` starts three services, not one:
 
 | Service | Role | Exposed port |
 |---|---|---|
@@ -31,13 +31,36 @@ Generation is handled inline in the request: `/generate_molecule` calls
 The stack previously carried Postgres, Redis and a Celery worker. None were on
 the request path, and no module under `backend/src` read `DATABASE_URL` or the
 Celery settings. `src/tasks.py` held a second copy of the mutation code that
-predated the fixes in PR #94, and the worker never imported it, so it registered
+predated the fixes in [#94](https://github.com/coccinella-labs/mole/pull/94), and the worker never imported it, so it registered
 only Celery built-ins. Running that copy directly produced results RDKit could
 not parse in 156 of 300 runs, and silently returned the input unchanged in 29.
 Registering those tasks would have exposed a second, less reliable mutation
-path, so the stack was removed rather than wired up. See issue #101.
+path, so the stack was removed rather than wired up. See issue [#101](https://github.com/coccinella-labs/mole/issues/101).
 
 ---
+
+## Frontend Build
+
+The web interface is built with Vite and Tailwind CSS 4, not Create React App.
+CRA hardcoded Tailwind into its PostCSS pipeline and disabled project-level
+PostCSS config, so Tailwind 4 could not be adopted without replacing the build
+tooling. The migration is [#110](https://github.com/coccinella-labs/mole/pull/110);
+the blocker it removed is recorded in [#93](https://github.com/coccinella-labs/mole/issues/93).
+
+The production image serves the static `dist` output from nginx. For local
+frontend work:
+
+```bash
+cd frontend
+npm ci
+npm run dev     # Vite dev server on http://localhost:3000
+npm run build   # production build into dist/
+```
+
+The container build remains the reference: it runs `npm ci` followed by
+`vite build`, and serves `dist`. Frontend environment variables use the `VITE_`
+prefix (`VITE_BACKEND_URL`, `VITE_API_KEY`), set as build arguments in
+`docker-compose.yml`.
 
 ## Execution
 
@@ -83,7 +106,10 @@ mol-platform --api-key your-key --generate "CC(=O)OC1=CC=CC=C1C(=O)O"
 ## Access Points
 
 - **API Documentation:** http://localhost:8000/docs
-- **Frontend Interface:** http://localhost:3000 (directly) or http://localhost:80 (through nginx)
+- **Frontend Interface:** http://localhost (through nginx) or http://localhost:3000 (frontend container directly)
+
+The API key is required on both `/health` and `/generate_molecule`. `GET /health`
+returns `401` without it.
 
 ---
 
@@ -152,8 +178,8 @@ as successful, because RDKit re-perceives aromaticity during sanitisation and
 can silently undo a bond order edit inside an aromatic ring. Such a candidate
 is counted in `failed_mutations` instead.
 
-`mutated` is `true` when at least one mutation changed the structure; when it
-is `false`, no mutation was applied and the returned molecule has the same
+`mutated` is `true` when at least one mutation changed the structure; when it is
+`false`, no mutation was applied and the returned molecule has the same
 structure as the input. `generated_smiles` is canonicalised, so its string
 representation may differ from `original_smiles` even in that case. The
 response still returns `200` in every completed case: the counters, not the
