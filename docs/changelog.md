@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/specificati
 - LRU caching for performance
 - Environment configuration with .env.example
 - Complete documentation
+- CLI packaged as standalone binary with `mol-platform` command
+- API key authentication for all endpoints
+- Documentation for API authentication setup
+- Workflow updates to use API_KEY secret
 
 ### Fixed
 - Corrected SMILES string manipulation with proper RDKit molecular editing
