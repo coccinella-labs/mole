@@ -60,7 +60,9 @@ def test_health_endpoint_reports_resolved_version():
     from src.main import app
 
     client = TestClient(app)
-    response = client.get("/health", headers={"Authorization": f"Bearer {settings.API_KEY}"})
+    response = client.get(
+        "/health", headers={"Authorization": f"Bearer {settings.API_KEY}"}
+    )
 
     assert response.status_code == 200
     assert response.json()["version"] == resolve_version()
