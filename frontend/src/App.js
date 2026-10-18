@@ -190,14 +190,23 @@ function App() {
                       alt="Generated Molecule"
                       className="mx-auto mb-4 max-w-xs"
                     />
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    {/* A SMILES string is one unbroken token, so it has no
+                        natural break opportunity. Without min-w-0 a grid item
+                        refuses to shrink below its content, and without a
+                        wrapping rule the text paints outside its track and
+                        collides with the neighbouring column. */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="min-w-0">
                         <strong>Original SMILES:</strong>
-                        <p className="text-sm">{generatedMolecule.original_smiles}</p>
+                        <p className="text-sm break-all">
+                          {generatedMolecule.original_smiles}
+                        </p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <strong>Generated SMILES:</strong>
-                        <p className="text-sm">{generatedMolecule.generated_smiles}</p>
+                        <p className="text-sm break-all">
+                          {generatedMolecule.generated_smiles}
+                        </p>
                       </div>
                     </div>
                     <div className="mt-4">
