@@ -66,27 +66,16 @@ This is the fastest way to get the CLI, since it skips building a wheel and
 needs no Python environment:
 
 ```
-curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.0.0/mol-platform
-chmod +x mol-platform
-./mol-platform --api-key your-key --health
+curl -LO https://github.com/coccinella-labs/mole/releases/download/v1.1.0/mole-linux
+chmod +x mole-linux
+./mole-linux --api-key your-key --health
 ```
 
-`v1.0.0` is the only release so far. It publishes a single un-suffixed
-`mol-platform`, plus `mol-platform.exe`, and the surviving binary is a Linux
-build. From `v1.1.0` the per-target names `mole-linux`, `mole-macos` and
-`mole-windows.exe` apply instead.
-
-**Note on `v1.0.0`.** That release predates both the per-target rename and the
-product rename. Because both the Linux and macOS jobs uploaded a file called
-`mol-platform`, they overwrote each other and the surviving asset is the Linux
-build. Verified: downloading it on macOS gives `exec format error`. There is
-currently no macOS binary for `v1.0.0`.
-
-**Asset names change at `v1.1.0`.** Assets up to and including `v1.0.0` are
-named `mol-platform` and `mol-platform.exe`; assets from `v1.1.0` onwards are
-named `mole-<target>`. Existing assets are not renamed or moved, so a link
-pinned to an older tag must keep the old name, and
-`releases/latest/download/mole-*` does not resolve until `v1.1.0` is published.
+**Asset names are per-target.** Every release publishes `mole-linux`,
+`mole-macos` and `mole-windows.exe`. Assets are never renamed or moved, so a URL
+pinned to an older tag keeps its original name. `releases/latest/download/mole-*`
+resolves to the newest release, so it changes target whenever a new release
+lands; pin the tag for a build that does not move.
 
 ### E2E Workflow (.github/workflows/e2e.yml)
 

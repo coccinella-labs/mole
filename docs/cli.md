@@ -18,7 +18,7 @@ Build and install the CLI package:
 ```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate && pip install build && python -m build
-pipx install dist/mol_platform-1.0.0-py3-none-any.whl
+pipx install dist/mol_platform-*-py3-none-any.whl
 ```
 
 This installs the `mol-platform` command globally. Provide the API key with `--api-key` (must match the backend's `API_KEY`).
@@ -65,7 +65,7 @@ mol-platform --api-key your-key --health
 ```
 Connecting to http://localhost:8000
 --------------------------------------------------
-✓ Health check passed: {'status': 'healthy', 'version': '1.0.0'}
+✓ Health check passed: {'status': 'healthy', 'version': '1.1.0'}
 --------------------------------------------------
 ✓ All tests passed
 ```
