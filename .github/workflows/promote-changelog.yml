@@ -22,7 +22,12 @@ on:
         type: string
 
 permissions:
-  contents: read
+  # write is required to push the promotion branch. With read only the push
+  # fails: "Permission to coccinella-labs/mole.git denied to
+  # github-actions[bot]". The workflow pushes only to
+  # changelog/promote-<version>, never to a protected branch, so the merge
+  # queue still governs how that branch reaches main.
+  contents: write
   pull-requests: write
 
 # One promotion at a time. Re-running a tag would otherwise race itself.
