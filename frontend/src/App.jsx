@@ -4,8 +4,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Configure axios base URL and auth
-const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
-const apiKey = process.env.REACT_APP_API_KEY;
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const apiKey = import.meta.env.VITE_API_KEY;
 
 // Mirrors MAX_MUTATIONS_PER_REQUEST in backend/src/main.py, which answers a
 // larger request with a 400. The API accepts 0 through this value: zero is a
@@ -124,7 +124,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
+        <div className="absolute inset-0 bg-linear-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
           <div className="max-w-md mx-auto">
             <div className="divide-y divide-gray-200">
@@ -174,7 +174,7 @@ function App() {
                   <button
                     onClick={handleGenerate}
                     disabled={isLoading}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {isLoading ? 'Generating...' : 'Generate Molecule'}
                   </button>

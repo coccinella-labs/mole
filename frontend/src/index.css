@@ -1,3 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-light-blue-500: #3b82f6;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
