@@ -61,8 +61,8 @@ For Local: Copy `backend/.env.example` to `backend/.env` and set `API_KEY=your-g
 ##### Frontend Setup (Run in Separate Terminal)
 ```bash
 cd frontend
-npm install
-npx react-scripts start  # Starts on http://localhost:3000
+npm ci
+npm run dev  # Vite dev server on http://localhost:3000
 ```
 
 ## Next Steps

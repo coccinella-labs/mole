@@ -17,7 +17,7 @@ cp .env.example .env
 | `API_KEY` | Bearer token required by every endpoint | `your-secret-api-key` |
 
 PostgreSQL and Redis were removed along with the unused Celery stack; there is
-no database or broker behind this service. See issue #101.
+no database or broker behind this service. See issue [#101](https://github.com/coccinella-labs/mole/issues/101).
 
 ### Frontend Variables
 
