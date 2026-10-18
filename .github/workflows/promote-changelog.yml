@@ -1,0 +1,99 @@
+name: Promote changelog
+
+# Runs when a version tag is pushed. Rewrites the changelog's Unreleased
+# section into a dated version heading and opens a pull request for it.
+#
+# It opens a pull request rather than committing to main unattended. The
+# repository has a merge queue and a ruleset now, and a changelog edit made
+# by a bot on a release night is exactly the kind of change worth a human
+# glance before it lands.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Manual runs, for testing this before it is ever needed on a real tag.
+  # `tag` is the full tag, for example v1.1.0.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag being released, for example v1.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# One promotion at a time. Re-running a tag would otherwise race itself.
+concurrency:
+  group: promote-changelog
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Promote against the default branch, not the tag, so the pull
+          # request carries anything merged since the tag was cut instead of
+          # reverting it. The tag's own snapshot is already immutable.
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Resolve the tag being released
+        id: tag
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+          PUSHED_TAG: ${{ github.ref_name }}
+        run: |
+          tag="${DISPATCH_TAG:-$PUSHED_TAG}"
+          if [ -z "$tag" ]; then
+            echo "::error::No tag to promote"
+            exit 1
+          fi
+          version="${tag#v}"
+          if [ "$version" = "$tag" ]; then
+            echo "::error::Tag '$tag' does not start with v"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Promote the Unreleased section
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          python3 .github/scripts/promote_changelog.py \
+            --version "$VERSION" \
+            --tag "$TAG" \
+            --report changelog-report.md
+
+      - name: Open the promotion pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          {
+            echo "Promotes the changelog for \`$TAG\`."
+            echo
+            cat changelog-report.md
+            echo
+            echo "Opened automatically by \`.github/workflows/promote-changelog.yml\`."
+          } > pr-body.md
+          gh pr create \
+            --base "${{ github.event.repository.default_branch }}" \
+            --title "Promote changelog: Unreleased to $VERSION" \
+            --body-file pr-body.md \
+            --label documentation \
+            || echo "::notice::No pull request opened. Close any existing one for this tag."
+
+      - name: Confirm the two changelog copies still match
+        run: |
+          # Same check the changelog-copies-match hook performs. Installing
+          # every hook environment to run one diff is not worth the time.
+          diff -u CHANGELOG.md docs/changelog.md
+          echo "CHANGELOG.md and docs/changelog.md match"
