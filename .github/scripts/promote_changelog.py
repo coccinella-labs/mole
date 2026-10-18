@@ -64,7 +64,9 @@ def promote(text: str, version: str, date: str, tag: str) -> str:
     # exists. Refuse instead, so re-running a workflow is a no-op rather
     # than a way to corrupt the file.
     released_heading = f"## [{version}]"
-    duplicates = [i for i, line in enumerate(lines) if line.strip().startswith(released_heading)]
+    duplicates = [
+        i for i, line in enumerate(lines) if line.strip().startswith(released_heading)
+    ]
     if duplicates:
         fail(
             f"{released_heading} already present at line {duplicates[0] + 1}, "
@@ -94,7 +96,11 @@ def pyproject_version(root: pathlib.Path) -> str | None:
     if not path.is_file():
         return None
     try:
-        found = tomllib.loads(path.read_text(encoding="utf-8")).get("project", {}).get("version")
+        found = (
+            tomllib.loads(path.read_text(encoding="utf-8"))
+            .get("project", {})
+            .get("version")
+        )
     except tomllib.TOMLDecodeError as exc:
         fail(f"could not parse {path}: {exc}")
     if not isinstance(found, str):
@@ -106,15 +112,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True, help="release version, no v prefix")
     parser.add_argument("--tag", required=True, help="full git tag, e.g. v1.1.0")
-    parser.add_argument("--date", default=None, help="release date, defaults to today (UTC)")
+    parser.add_argument(
+        "--date", default=None, help="release date, defaults to today (UTC)"
+    )
     parser.add_argument("--root", default=".", type=pathlib.Path)
-    parser.add_argument("--report", default=None, type=pathlib.Path, help="markdown report path")
+    parser.add_argument(
+        "--report", default=None, type=pathlib.Path, help="markdown report path"
+    )
     args = parser.parse_args()
 
     if args.version.startswith("v"):
         fail(f"--version should not carry the v prefix, got {args.version!r}")
 
-    date = args.date or dt.datetime.now(dt.timezone.utc).date().isoformat()
+    date = args.date or dt.datetime.now(dt.UTC).date().isoformat()
     root = args.root.resolve()
 
     changelog = root / "CHANGELOG.md"
@@ -133,11 +143,15 @@ def main() -> int:
         published.write_text(updated, encoding="utf-8")
         published_note = "Rewrote `docs/changelog.md` to match."
     else:
-        published_note = "`docs/changelog.md` not found, only the root file was rewritten."
+        published_note = (
+            "`docs/changelog.md` not found, only the root file was rewritten."
+        )
 
     declared = pyproject_version(root)
     if declared is None:
-        version_note = "Could not read `backend/pyproject.toml`, version not cross-checked."
+        version_note = (
+            "Could not read `backend/pyproject.toml`, version not cross-checked."
+        )
     elif declared == args.version:
         version_note = (
             f"`backend/pyproject.toml` declares `{declared}`, matching the tag."
