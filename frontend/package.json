@@ -18,6 +18,7 @@
     "cypress:run": "cypress run"
   },
   "devDependencies": {
+    "@cypress/request": "4.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.2",
     "cypress": "^16.1.1",
