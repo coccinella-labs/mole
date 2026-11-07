@@ -16,7 +16,7 @@ Pillow
 
 # Authentication
 passlib==1.7.4
-python-multipart==0.0.32
+python-multipart==0.0.33
 
 # Background Tasks
 # asyncio is built-in

@@ -15,7 +15,7 @@ dependencies = [
     "numpy",
     "Pillow",
     "passlib==1.7.4",
-    "python-multipart==0.0.32",
+    "python-multipart==0.0.33",
     "email-validator==2.3.0",
     "sentry-sdk==2.72.0",
     "pytest==9.1.1",
