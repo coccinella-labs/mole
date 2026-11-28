@@ -15,7 +15,7 @@ numpy
 Pillow
 
 # Authentication
-passlib==1.7.4
+passlib==1.9.5
 python-multipart==0.0.32
 
 # Background Tasks
